@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>معمل النهضة للمنظفات</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="IMGS/Blue White Simple Cleaning Service Logo.png" type="image/png" sizes="16x16" >
+</head>
+<body>
+
+<!-- شاشة الدخول -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🧴</div>
+    <h2>مرحباً بك في معمل النهضة</h2>
+    <p class="login-subtitle">أدخل بيانات العنوان للمتابعة</p>
+    <select id="district">
+      <option value="">اختر الحي</option>
+      <option>حي النهضة</option>
+      <option>حي النخيل</option>
+      <option>حي الرحمة</option>
+      <option>حي البساتين</option>
+    </select>
+    <input type="text" id="street" placeholder="رقم الحارة">
+    <input type="text" id="home" placeholder="رقم البيت">
+    <button onclick="saveClientData()" class="login-btn">
+      <span>دخول</span>
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <p class="login-note">🔒 بياناتك محفوظة محلياً</p>
+  </div>
+</div>
+
+<!-- الموقع الرئيسي -->
+<div id="mainSite" style="display:none;">
+
+  <!-- الهيدر -->
+  <header>
+    <div class="header-right">
+      <div class="logo">
+        <span class="logo-icon">🧴</span>
+        <span>معمل النهضة</span>
+      </div>
+      <div class="delivery-bar">
+        <span>🚚 توصيل مجاني داخل حي النهضة</span>
+      </div>
+    </div>
+
+    <div class="header-user">
+      <div class="user-profile" onclick="showFullAddress()" id="welcomeUser">
+        <i class="fas fa-user-circle"></i>
+        <span id="userName"></span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <button onclick="toggleOrders()" class="orders-btn">
+        <i class="fas fa-history"></i>
+        <span>طلباتي</span>
+      </button>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- شريط العروض -->
+  <div class="promo-bar">
+    <div class="promo-content">
+      <span class="promo-icon">🔥</span>
+      <span class="promo-text"> نتطلع أن نكون محل ثقتكم • جودة عالية • أسعار منافسة</span>
+      <span class="promo-icon">✨</span>
+    </div>
+  </div>
+
+  <!-- إحصائيات سريعة -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <i class="fas fa-box"></i>
+      <span id="visitorCount">0</span>
+      <small>طلب اليوم</small>
+    </div>
+    <div class="stat-item">
+      <i class="fas fa-star"></i>
+      <span>4.8</span>
+      <small>تقييم</small>
+    </div>
+    <div class="stat-item">
+      <i class="fas fa-truck"></i>
+      <span>توصيل مجاني</span>
+      <small>توصيل سريع</small>
+    </div>
+  </div>
+
+  <!-- شريط البحث والتصنيف -->
+  <div class="search-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="ابحث عن منتج..." onkeyup="filterProducts()">
+    </div>
+    <div class="categories">
+      <button class="category-btn active" onclick="filterCategory('all')">الكل</button>
+      <button class="category-btn" onclick="filterCategory('منظفات')">منظفات</button>
+      <button class="category-btn" onclick="filterCategory('شامبو')">شامبو</button>
+      <button class="category-btn" onclick="filterCategory('معطر')">معطر</button>
+    </div>
+  </div>
+
+  <!-- المنتجات -->
+  <section class="products" id="products"></section>
+
+  <!-- السلة -->
+  <div class="cart" id="cart">
+    <div class="cart-header">
+      <h2><i class="fas fa-shopping-cart"></i> سلة الطلبات</h2>
+      <button class="close-cart" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="cart-footer">
+      <div class="cart-total" id="totalPrice">الإجمالي: 0 ₺</div>
+      <div class="cart-actions">
+        <button class="whatsapp" onclick="sendWhatsApp()">
+          <i class="fab fa-whatsapp"></i> واتساب
+        </button>
+        <button class="clear" onclick="clearCart()">
+          <i class="fas fa-trash"></i> تفريغ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الطلبات السابقة -->
+  <div class="orders" id="orders">
+    <div class="orders-header">
+      <h2><i class="fas fa-history"></i> طلباتي السابقة</h2>
+      <button class="close-orders" onclick="toggleOrders()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="ordersList" class="orders-list"></div>
+  </div>
+
+  <!-- السلة العائمة -->
+  <div class="floating-cart" onclick="toggleCart()">
+    <i class="fas fa-shopping-cart"></i>
+    <span id="floatingCount">0</span>
+  </div>
+
+  <!-- رسالة منبثقة -->
+  <div id="toast" class="toast"></div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
