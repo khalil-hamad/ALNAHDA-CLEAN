@@ -118,8 +118,8 @@ function showFullAddress() {
 
 const products = [
   { name: "صابون سائل", price: 35, img: "IMGS/صابون سائل.jpeg", category: "منظفات", available: true },
-  { name: "سائل جلي", price: 15, img: "IMGS/سائل جلي.jpeg", category: "منظفات", available: true },
-  { name: "معطر جو", price: 25, img: "IMGS/معطر.jpeg", category: "معطرات", available: false },
+  { name: "سائل جلي", price: 10, img: "IMGS/سائل جلي.jpeg", category: "منظفات", available: true },
+  { name: "معطر ", price: 25, img: "IMGS/معطر.jpeg", category: "معطر", available: false },
   { name: "دواء غسيل اوتوماتيك", price: 45, img: "IMGS/دواء غسيل.jpeg", category: "منظفات", available: true },
   { name: "دواء غسيل عادي", price: 45, img: "IMGS/دواء غسيل.jpeg", category: "منظفات", available: true },
   { name: "كلور", price: 13, img: "IMGS/كلور.jpeg", category: "منظفات", available: true },
@@ -471,4 +471,5 @@ function showToast(message, type = "info") {
     toast.style.opacity = "0";
     toast.style.bottom = "80px";
   }, 2000);
+
 }
