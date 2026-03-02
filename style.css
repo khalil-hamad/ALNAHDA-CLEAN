@@ -12,6 +12,140 @@
   --white: #ffffff;
   --shadow: 0 5px 20px rgba(0,0,0,0.08);
   --shadow-hover: 0 8px 25px rgba(0,0,0,0.12);
+  --notes-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #e9ecef;
+  --text-primary: #2c3e50;
+  --text-secondary: #34495e;
+  --card-bg: #ffffff;
+  --border-color: #eee;
+  --input-bg: #ffffff;
+  --input-text: #2c3e50;
+  --header-text: #ffffff;
+}
+
+/* الوضع الليلي المحسن بالكامل */
+body.dark-mode {
+  --bg-primary: #0f0f1a;
+  --bg-secondary: #1a1a2e;
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --card-bg: #16213e;
+  --border-color: #2a2a4a;
+  --dark: #ffffff;
+  --light: #1a1a2e;
+  --gray: #b0b0b0;
+  --shadow: 0 5px 20px rgba(0,0,0,0.5);
+  --shadow-hover: 0 8px 25px rgba(0,0,0,0.7);
+  --input-bg: #0f3460;
+  --input-text: #ffffff;
+  --header-text: #ffffff;
+}
+
+body.dark-mode {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* تحويل جميع النصوص في الوضع الليلي */
+body.dark-mode .card h3,
+body.dark-mode .card .price,
+body.dark-mode .stat-item span,
+body.dark-mode .stat-item small,
+body.dark-mode .cart-total,
+body.dark-mode .order-item,
+body.dark-mode .order-item b,
+body.dark-mode .order-item small,
+body.dark-mode .user-profile span,
+body.dark-mode .loyalty-points span,
+body.dark-mode .notes-section h3,
+body.dark-mode .notes-section p,
+body.dark-mode .modal-body,
+body.dark-mode .modal-body h4,
+body.dark-mode .modal-body li,
+body.dark-mode .cart-user,
+body.dark-mode .cart-item,
+body.dark-mode .cart-item b,
+body.dark-mode .cart-item small,
+body.dark-mode .cart-item strong,
+body.dark-mode .points-earned,
+body.dark-mode .delivery-result,
+body.dark-mode .admin-panel h2,
+body.dark-mode .admin-panel h3,
+body.dark-mode .admin-panel span,
+body.dark-mode .admin-panel div {
+  color: var(--text-primary);
+}
+
+/* تحويل خلفيات البطاقات */
+body.dark-mode .card,
+body.dark-mode .search-box input,
+body.dark-mode .category-btn,
+body.dark-mode .notes-section,
+body.dark-mode .cart,
+body.dark-mode .orders,
+body.dark-mode .modal-content,
+body.dark-mode .admin-panel,
+body.dark-mode .delivery-calculator,
+body.dark-mode .cart-footer,
+body.dark-mode .order-item,
+body.dark-mode .cart-item,
+body.dark-mode .points-history .order-item {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* تحويل المدخلات */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: var(--input-bg);
+  color: var(--input-text);
+  border: 2px solid var(--border-color);
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: var(--gray);
+}
+
+/* تحويل الحدود */
+body.dark-mode .cart-item,
+body.dark-mode .order-item,
+body.dark-mode .cart-footer {
+  border-color: var(--border-color);
+}
+
+/* تحويل الأزرار في الوضع الليلي */
+body.dark-mode .category-btn {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+body.dark-mode .category-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+body.dark-mode .whatsapp,
+body.dark-mode .clear,
+body.dark-mode .orders-btn,
+body.dark-mode .send-note-btn {
+  color: white;
+}
+
+/* تحويل الإحصائيات السابقة */
+body.dark-mode .stat-item {
+  background: var(--card-bg);
+}
+
+body.dark-mode .stat-item span {
+  color: var(--text-primary);
+}
+
+body.dark-mode .stat-item small {
+  color: var(--text-secondary);
 }
 
 * {
@@ -22,9 +156,469 @@
 }
 
 body {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   min-height: 100vh;
   direction: rtl;
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* =============== زر الوضع الليلي =============== */
+
+.dark-mode-toggle {
+  position: fixed;
+  top: 100px;
+  left: 20px;
+  background: var(--dark);
+  color: white;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1500;
+  box-shadow: var(--shadow-hover);
+  transition: 0.3s;
+  animation: pulse 2s infinite;
+}
+
+.dark-mode-toggle:hover {
+  transform: scale(1.1) rotate(360deg);
+}
+
+/* =============== زر صفحة المتجر =============== */
+
+.admin-toggle {
+  position: fixed;
+  top: 160px;
+  left: 20px;
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: white;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1500;
+  box-shadow: var(--shadow-hover);
+  transition: 0.3s;
+  animation: pulse 2s infinite;
+}
+
+.admin-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* =============== منطقة الإشعارات =============== */
+
+.notification-area {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  z-index: 3000;
+  max-width: 350px;
+}
+
+.notification {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-hover);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideInLeft 0.3s ease;
+  border-right: 4px solid var(--primary);
+}
+
+body.dark-mode .notification {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.notification.success {
+  border-right-color: var(--success);
+}
+
+.notification.error {
+  border-right-color: var(--danger);
+}
+
+.notification.warning {
+  border-right-color: var(--accent);
+}
+
+.notification i {
+  font-size: 24px;
+}
+
+.notification.success i {
+  color: var(--success);
+}
+
+.notification.error i {
+  color: var(--danger);
+}
+
+.notification.warning i {
+  color: var(--accent);
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: var(--gray);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* =============== نقاط الولاء =============== */
+
+.loyalty-points {
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.loyalty-points:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3);
+}
+
+.points-earned {
+  background: #f1c40f20;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #e67e22;
+  font-weight: bold;
+}
+
+/* =============== نافذة معلومات النقاط =============== */
+
+.loyalty-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  animation: fadeIn 0.3s ease;
+}
+
+.loyalty-modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 20px 20px 0 0;
+}
+
+.modal-header button {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.points-summary {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+
+body.dark-mode .points-summary {
+  background: var(--card-bg);
+}
+
+.big-points {
+  font-size: 48px;
+  font-weight: bold;
+  color: #e67e22;
+  display: block;
+}
+
+.points-rules {
+  margin-bottom: 20px;
+}
+
+.points-rules h4 {
+  margin-bottom: 10px;
+  color: var(--dark);
+}
+
+.points-rules ul {
+  list-style: none;
+  padding: 0;
+}
+
+.points-rules li {
+  padding: 8px;
+  background: #f8f9fa;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+body.dark-mode .points-rules li {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.points-history {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* =============== صفحة المتجر =============== */
+
+.admin-panel {
+  position: fixed;
+  right: -100%;
+  top: 0;
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  background: white;
+  box-shadow: -5px 0 30px rgba(0,0,0,0.2);
+  transition: 0.3s ease-in-out;
+  z-index: 4000;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.admin-panel.active {
+  right: 0;
+}
+
+.admin-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-header button {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.admin-body {
+  padding: 20px;
+  flex: 1;
+}
+
+.admin-section {
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+body.dark-mode .admin-section {
+  background: var(--card-bg);
+}
+
+.admin-section h3 {
+  margin-bottom: 15px;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-form select,
+.admin-form input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  font-size: 14px;
+  background: var(--input-bg);
+  color: var(--input-text);
+}
+
+.admin-btn {
+  padding: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.3s;
+}
+
+.admin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+.admin-result {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  text-align: center;
+  display: none;
+}
+
+.admin-result.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.admin-stat {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+body.dark-mode .admin-stat {
+  background: var(--card-bg);
+}
+
+.stat-label {
+  display: block;
+  font-size: 13px;
+  color: var(--gray);
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.customers-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.customer-item {
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.dark-mode .customer-item {
+  background: var(--card-bg);
+}
+
+.customer-info {
+  flex: 1;
+}
+
+.customer-name {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.customer-address {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.customer-points {
+  background: #f1c40f;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 14px;
 }
 
 /* =============== شاشة الدخول =============== */
@@ -121,7 +715,7 @@ body {
 
 header {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
+  color: var(--header-text);
   padding: 15px 20px;
   display: flex;
   flex-wrap: wrap;
@@ -146,6 +740,7 @@ header {
   font-size: 22px;
   font-weight: bold;
   flex-wrap: wrap;
+  color: white;
 }
 
 .logo-icon {
@@ -163,6 +758,7 @@ header {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  color: white;
 }
 
 .header-user {
@@ -184,6 +780,7 @@ header {
   transition: 0.3s;
   font-size: 14px;
   max-width: 180px;
+  color: white;
 }
 
 .user-profile span {
@@ -191,6 +788,7 @@ header {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100px;
+  color: white;
 }
 
 .orders-btn, .logout-btn {
@@ -252,45 +850,6 @@ header {
   white-space: nowrap;
 }
 
-/* =============== الإحصائيات =============== */
-
-.stats-bar {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  padding: 20px;
-  background: white;
-  margin: 15px;
-  border-radius: 20px;
-  box-shadow: var(--shadow);
-}
-
-.stat-item {
-  text-align: center;
-  padding: 12px;
-  border-radius: 15px;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-}
-
-.stat-item i {
-  font-size: 22px;
-  color: var(--primary);
-  display: block;
-  margin-bottom: 5px;
-}
-
-.stat-item span {
-  font-size: 18px;
-  font-weight: bold;
-  color: var(--dark);
-  display: block;
-}
-
-.stat-item small {
-  color: var(--gray);
-  font-size: 11px;
-}
-
 /* =============== البحث والتصنيف =============== */
 
 .search-bar {
@@ -318,6 +877,8 @@ header {
   border-radius: 30px;
   font-size: 15px;
   box-shadow: var(--shadow);
+  background: var(--input-bg);
+  color: var(--input-text);
 }
 
 .search-box input:focus {
@@ -391,7 +952,7 @@ header {
 }
 
 .card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--shadow);
@@ -400,6 +961,7 @@ header {
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .card:hover {
@@ -428,7 +990,7 @@ header {
 }
 
 .card h3 {
-  color: var(--dark);
+  color: var(--text-primary);
   margin-bottom: 5px;
   font-size: 15px;
   white-space: nowrap;
@@ -461,8 +1023,10 @@ header {
   padding: 8px;
   margin: 4px 0;
   border-radius: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   font-size: 13px;
+  background: var(--input-bg);
+  color: var(--input-text);
 }
 
 .card button {
@@ -483,9 +1047,117 @@ header {
   transition: 0.3s;
 }
 
-.card button:hover {
+.card button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(14, 173, 117, 0.3);
+  box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+.card button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* =============== قسم الملاحظات =============== */
+
+.notes-section {
+  background: var(--notes-bg);
+  margin: 20px 15px;
+  border-radius: 20px;
+  padding: 20px;
+  color: white;
+  box-shadow: var(--shadow-hover);
+  animation: fadeInUp 0.6s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.notes-section::before {
+  content: "💬";
+  position: absolute;
+  left: -20px;
+  bottom: -20px;
+  font-size: 100px;
+  opacity: 0.1;
+  transform: rotate(-10deg);
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.notes-header i {
+  font-size: 28px;
+  color: #ffd700;
+}
+
+.notes-header h3 {
+  font-size: 22px;
+  font-weight: bold;
+  color: white;
+}
+
+.notes-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.note-type {
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  background: rgba(255,255,255,0.95);
+  cursor: pointer;
+}
+
+.notes-content textarea {
+  width: 100%;
+  height: 100px;
+  padding: 15px;
+  border: none;
+  border-radius: 15px;
+  font-size: 15px;
+  font-family: 'Cairo', sans-serif;
+  resize: vertical;
+  background: rgba(255,255,255,0.95);
+  transition: 0.3s;
+}
+
+.notes-content textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,215,0,0.5);
+  background: white;
+}
+
+.notes-content textarea::placeholder {
+  color: #999;
+}
+
+.send-note-btn {
+  background: var(--whatsapp);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: 0.3s;
+  box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+}
+
+.send-note-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
 }
 
 /* =============== السلة =============== */
@@ -497,7 +1169,7 @@ header {
   width: 100%;
   max-width: 380px;
   height: 100%;
-  background: white;
+  background: var(--card-bg);
   box-shadow: 5px 0 30px rgba(0,0,0,0.2);
   transition: 0.3s ease-in-out;
   z-index: 2000;
@@ -523,6 +1195,7 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: white;
 }
 
 .close-cart {
@@ -571,13 +1244,13 @@ header {
 .cart-footer {
   padding: 15px;
   background: #f8f9fa;
-  border-top: 2px solid #eee;
+  border-top: 2px solid var(--border-color);
 }
 
 .cart-total {
   font-size: 18px;
   font-weight: bold;
-  color: var(--dark);
+  color: var(--text-primary);
   margin-bottom: 12px;
   text-align: center;
 }
@@ -620,7 +1293,7 @@ header {
   width: 100%;
   max-width: 380px;
   height: 100%;
-  background: white;
+  background: var(--card-bg);
   box-shadow: -5px 0 30px rgba(0,0,0,0.2);
   transition: 0.3s ease-in-out;
   z-index: 2000;
@@ -646,6 +1319,7 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: white;
 }
 
 .close-orders {
@@ -781,18 +1455,12 @@ header {
     max-width: 120px;
   }
   
-  .stats-bar {
-    margin: 10px;
-    padding: 12px;
-    gap: 8px;
-  }
-  
   .category-btn {
     padding: 6px 12px;
     font-size: 12px;
   }
   
-  .cart, .orders {
+  .cart, .orders, .admin-panel {
     max-width: 100%;
   }
   
@@ -811,19 +1479,35 @@ header {
   button {
     min-height: 44px;
   }
+  
+  .notes-section {
+    margin: 15px;
+    padding: 15px;
+  }
+  
+  .dark-mode-toggle,
+  .admin-toggle {
+    top: auto;
+    bottom: 90px;
+    left: 20px;
+  }
+  
+  .admin-toggle {
+    bottom: 150px;
+  }
 }
 
 /* =============== دعم الشاشات الأفقية =============== */
 
 @media (max-width: 900px) and (orientation: landscape) {
-  .cart, .orders {
+  .cart, .orders, .admin-panel {
     max-width: 100%;
     height: 90%;
     top: 5%;
     border-radius: 15px;
   }
   
-  .cart.active, .orders.active {
+  .cart.active, .orders.active, .admin-panel.active {
     left: 5%;
     right: 5%;
     width: 90%;
@@ -864,6 +1548,28 @@ header {
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
@@ -877,6 +1583,11 @@ header {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
 /* =============== التمرير المخصص =============== */
