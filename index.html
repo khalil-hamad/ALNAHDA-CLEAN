@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="icon" href="IMGS/Blue White Simple Cleaning Service Logo.png" type="image/png" sizes="16x16" >
 </head>
 <body>
 
@@ -16,7 +15,7 @@
   <div class="login-box">
     <div class="login-logo">🧴</div>
     <h2>مرحباً بك في معمل النهضة</h2>
-    <p class="login-subtitle">أدخل بيانات العنوان للمتابعة</p>
+    <p class="login-subtitle">أدخل عنوانك للمتابعة</p>
     <select id="district">
       <option value="">اختر الحي</option>
       <option>حي النهضة</option>
@@ -37,6 +36,19 @@
 <!-- الموقع الرئيسي -->
 <div id="mainSite" style="display:none;">
 
+  <!-- زر الوضع الليلي -->
+  <div class="dark-mode-toggle" onclick="toggleDarkMode()" id="darkModeBtn">
+    <i class="fas fa-moon"></i>
+  </div>
+
+  <!-- زر الدخول لصفحة المتجر (يظهر فقط لصاحب المتجر) -->
+  <div class="admin-toggle" onclick="toggleAdminPanel()" id="adminBtn" style="display:none;">
+    <i class="fas fa-crown"></i>
+  </div>
+
+  <!-- منطقة الإشعارات -->
+  <div id="notificationArea" class="notification-area"></div>
+
   <!-- الهيدر -->
   <header>
     <div class="header-right">
@@ -51,10 +63,17 @@
 
     <div class="header-user">
       <div class="user-profile" onclick="showFullAddress()" id="welcomeUser">
-        <i class="fas fa-user-circle"></i>
-        <span id="userName"></span>
+        <i class="fas fa-map-marker-alt"></i>
+        <span id="userAddress"></span>
         <i class="fas fa-chevron-down"></i>
       </div>
+      
+      <!-- نقاط الولاء -->
+      <div class="loyalty-points" onclick="showLoyaltyInfo()">
+        <i class="fas fa-star"></i>
+        <span id="pointsDisplay">0</span>
+      </div>
+      
       <button onclick="toggleOrders()" class="orders-btn">
         <i class="fas fa-history"></i>
         <span>طلباتي</span>
@@ -69,27 +88,8 @@
   <div class="promo-bar">
     <div class="promo-content">
       <span class="promo-icon">🔥</span>
-      <span class="promo-text"> نتطلع أن نكون محل ثقتكم • جودة عالية • أسعار منافسة</span>
+      <span class="promo-text">عروض يومية • جودة عالية • أسعار منافسة</span>
       <span class="promo-icon">✨</span>
-    </div>
-  </div>
-
-  <!-- إحصائيات سريعة -->
-  <div class="stats-bar">
-    <div class="stat-item">
-      <i class="fas fa-box"></i>
-      <span id="visitorCount">0</span>
-      <small>طلب اليوم</small>
-    </div>
-    <div class="stat-item">
-      <i class="fas fa-star"></i>
-      <span>4.8</span>
-      <small>تقييم</small>
-    </div>
-    <div class="stat-item">
-      <i class="fas fa-truck"></i>
-      <span>توصيل مجاني</span>
-      <small>توصيل سريع</small>
     </div>
   </div>
 
@@ -103,12 +103,33 @@
       <button class="category-btn active" onclick="filterCategory('all')">الكل</button>
       <button class="category-btn" onclick="filterCategory('منظفات')">منظفات</button>
       <button class="category-btn" onclick="filterCategory('شامبو')">شامبو</button>
-      <button class="category-btn" onclick="filterCategory('معطر')">معطر</button>
+      <button class="category-btn" onclick="filterCategory('معطرات')">معطرات</button>
     </div>
   </div>
 
   <!-- المنتجات -->
   <section class="products" id="products"></section>
+
+  <!-- قسم الملاحظات -->
+  <div class="notes-section">
+    <div class="notes-header">
+      <i class="fas fa-pen"></i>
+      <h3>ملاحظاتكم</h3>
+    </div>
+    <div class="notes-content">
+      <select id="noteType" class="note-type">
+        <option value="suggestion">💡 اقتراح</option>
+        <option value="complaint">⚠️ شكوى</option>
+        <option value="inquiry">❓ استفسار</option>
+        <option value="praise">🌟 إشادة</option>
+      </select>
+      <textarea id="userNote" placeholder="اكتب ملاحظاتك أو اقتراحاتك هنا..."></textarea>
+      <button onclick="sendNoteToWhatsApp()" class="send-note-btn">
+        <i class="fab fa-whatsapp"></i>
+        إرسال الملاحظات
+      </button>
+    </div>
+  </div>
 
   <!-- السلة -->
   <div class="cart" id="cart">
@@ -118,6 +139,7 @@
     </div>
     <div id="cartItems" class="cart-items"></div>
     <div class="cart-footer">
+      <div class="points-earned" id="pointsEarned">🌟 ستحصل على 0 نقطة</div>
       <div class="cart-total" id="totalPrice">الإجمالي: 0 ₺</div>
       <div class="cart-actions">
         <button class="whatsapp" onclick="sendWhatsApp()">
@@ -137,6 +159,85 @@
       <button class="close-orders" onclick="toggleOrders()"><i class="fas fa-times"></i></button>
     </div>
     <div id="ordersList" class="orders-list"></div>
+  </div>
+
+  <!-- نافذة معلومات النقاط -->
+  <div class="loyalty-modal" id="loyaltyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-star"></i> برنامج الولاء</h3>
+        <button onclick="closeLoyaltyModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="points-summary">
+          <span class="big-points" id="modalPoints">0</span>
+          <span>نقطة</span>
+        </div>
+        <div class="points-rules">
+          <h4>كيف تحصل على النقاط؟</h4>
+          <ul>
+            <li>💫 كل 10 ريال = نقطة واحدة</li>
+            <li>🎁 50 نقطة = خصم 5 ريال</li>
+            <li>✨ 100 نقطة = خصم 12 ريال</li>
+            <li>👑 200 نقطة = خصم 25 ريال + هدية</li>
+          </ul>
+        </div>
+        <div class="points-history">
+          <h4>نقاطك السابقة</h4>
+          <div id="pointsHistory"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== صفحة صاحب المتجر ===== -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-header">
+      <h2><i class="fas fa-crown"></i> لوحة تحكم المتجر</h2>
+      <button onclick="toggleAdminPanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="admin-body">
+      <!-- إضافة نقاط للعملاء -->
+      <div class="admin-section">
+        <h3>إضافة نقاط للعملاء</h3>
+        <div class="admin-form">
+          <select id="adminCustomer">
+            <option value="">اختر العميل</option>
+          </select>
+          <input type="number" id="adminAmount" placeholder="المبلغ بالريال">
+          <button onclick="addPointsByAdmin()" class="admin-btn">
+            <i class="fas fa-plus-circle"></i>
+            إضافة نقاط
+          </button>
+          <div id="adminPointsResult" class="admin-result"></div>
+        </div>
+      </div>
+
+      <!-- إحصائيات سريعة -->
+      <div class="admin-section">
+        <h3>إحصائيات سريعة</h3>
+        <div class="admin-stats">
+          <div class="admin-stat">
+            <span class="stat-label">إجمالي العملاء:</span>
+            <span class="stat-value" id="totalCustomers">0</span>
+          </div>
+          <div class="admin-stat">
+            <span class="stat-label">إجمالي الطلبات:</span>
+            <span class="stat-value" id="totalOrders">0</span>
+          </div>
+          <div class="admin-stat">
+            <span class="stat-label">إجمالي النقاط الممنوحة:</span>
+            <span class="stat-value" id="totalPoints">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- قائمة العملاء -->
+      <div class="admin-section">
+        <h3>قائمة العملاء</h3>
+        <div class="customers-list" id="customersList"></div>
+      </div>
+    </div>
   </div>
 
   <!-- السلة العائمة -->
