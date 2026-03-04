@@ -10,7 +10,7 @@ let pointsHistory = [];
 let pendingOrders = JSON.parse(localStorage.getItem("pendingOrders")) || [];
 
 // كلمة سر صاحب المتجر (يمكن تغييرها)
-const ADMIN_PASSWORD = "khalil";
+const ADMIN_PASSWORD = "admin123";
 const ADMIN_USER_ID = "996225386048";
 
 // =============== التهيئة ===============
