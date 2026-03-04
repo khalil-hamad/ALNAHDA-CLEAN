@@ -88,22 +88,19 @@
   <div class="promo-bar">
     <div class="promo-content">
       <span class="promo-icon">🔥</span>
-      <span class="promo-text">عروض يومية • جودة عالية • أسعار منافسة</span>
+      <span class="promo-text">• جودة عالية • أسعار منافسة</span>
       <span class="promo-icon">✨</span>
     </div>
   </div>
 
   <!-- شريط البحث والتصنيف -->
   <div class="search-bar">
-    <div class="search-box">
-      <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="ابحث عن منتج..." onkeyup="filterProducts()">
-    </div>
+    
     <div class="categories">
       <button class="category-btn active" onclick="filterCategory('all')">الكل</button>
       <button class="category-btn" onclick="filterCategory('منظفات')">منظفات</button>
       <button class="category-btn" onclick="filterCategory('شامبو')">شامبو</button>
-      <button class="category-btn" onclick="filterCategory('معطرات')">معطرات</button>
+      <button class="category-btn" onclick="filterCategory('معطر')">معطر</button>
     </div>
   </div>
 
@@ -139,7 +136,6 @@
     </div>
     <div id="cartItems" class="cart-items"></div>
     <div class="cart-footer">
-      <div class="points-earned" id="pointsEarned">🌟 ستحصل على 0 نقطة</div>
       <div class="cart-total" id="totalPrice">الإجمالي: 0 ₺</div>
       <div class="cart-actions">
         <button class="whatsapp" onclick="sendWhatsApp()">
@@ -165,7 +161,7 @@
   <div class="loyalty-modal" id="loyaltyModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3><i class="fas fa-star"></i> برنامج الولاء</h3>
+        <h3><i class="fas fa-star"></i> برنامج النقاط</h3>
         <button onclick="closeLoyaltyModal()"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
@@ -176,10 +172,10 @@
         <div class="points-rules">
           <h4>كيف تحصل على النقاط؟</h4>
           <ul>
-            <li>💫 كل 10 ريال = نقطة واحدة</li>
-            <li>🎁 50 نقطة = خصم 5 ريال</li>
-            <li>✨ 100 نقطة = خصم 12 ريال</li>
-            <li>👑 200 نقطة = خصم 25 ريال + هدية</li>
+            <li>💫 كل 30 ليرة = نقطة واحدة</li>
+            <li>🎁 5 نقطة = خصم 3 ليرات</li>
+            <li>✨ 20 نقطة = كيلو صابون سائل مجانا</li>
+            <li>👑 50 نقطة = خصم 20%على الفاتورة</li>
           </ul>
         </div>
         <div class="points-history">
@@ -197,14 +193,21 @@
       <button onclick="toggleAdminPanel()"><i class="fas fa-times"></i></button>
     </div>
     <div class="admin-body">
+      
+      <!-- إشعارات الطلبات الجديدة -->
+      <div class="admin-section" id="pendingOrdersSection">
+        <h3>🆕 طلبات جديدة في انتظار النقاط</h3>
+        <div id="pendingOrdersList" class="pending-orders-list"></div>
+      </div>
+
       <!-- إضافة نقاط للعملاء -->
       <div class="admin-section">
-        <h3>إضافة نقاط للعملاء</h3>
+        <h3>➕ إضافة نقاط للعملاء</h3>
         <div class="admin-form">
           <select id="adminCustomer">
             <option value="">اختر العميل</option>
           </select>
-          <input type="number" id="adminAmount" placeholder="المبلغ بالريال">
+          <input type="number" id="adminAmount" placeholder="المبلغ بالليرة التركية">
           <button onclick="addPointsByAdmin()" class="admin-btn">
             <i class="fas fa-plus-circle"></i>
             إضافة نقاط
@@ -215,7 +218,7 @@
 
       <!-- إحصائيات سريعة -->
       <div class="admin-section">
-        <h3>إحصائيات سريعة</h3>
+        <h3>📊 إحصائيات سريعة</h3>
         <div class="admin-stats">
           <div class="admin-stat">
             <span class="stat-label">إجمالي العملاء:</span>
@@ -229,13 +232,25 @@
             <span class="stat-label">إجمالي النقاط الممنوحة:</span>
             <span class="stat-value" id="totalPoints">0</span>
           </div>
+          <div class="admin-stat">
+            <span class="stat-label">طلبات بانتظار النقاط:</span>
+            <span class="stat-value" id="pendingCount">0</span>
+          </div>
         </div>
       </div>
 
-      <!-- قائمة العملاء -->
+      <!-- جميع العملاء المسجلين -->
       <div class="admin-section">
-        <h3>قائمة العملاء</h3>
-        <div class="customers-list" id="customersList"></div>
+        <h3>👥 جميع العملاء المسجلين</h3>
+        <div class="customers-list" id="customersList">
+          <!-- يتم تعبئتها تلقائياً -->
+        </div>
+      </div>
+
+      <!-- سجل النقاط المضافة -->
+      <div class="admin-section">
+        <h3>📝 سجل النقاط المضافة</h3>
+        <div id="pointsLog" class="points-log"></div>
       </div>
     </div>
   </div>
