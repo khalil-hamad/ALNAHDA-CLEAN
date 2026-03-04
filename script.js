@@ -7,9 +7,10 @@ let cart = [];
 let ordersHistory = [];
 let userPoints = 0;
 let pointsHistory = [];
+let pendingOrders = JSON.parse(localStorage.getItem("pendingOrders")) || [];
 
 // كلمة سر صاحب المتجر (يمكن تغييرها)
-const ADMIN_PASSWORD = "admin123";
+const ADMIN_PASSWORD = "khalil996225386048";
 const ADMIN_USER_ID = "admin_nehda_store";
 
 // =============== التهيئة ===============
@@ -66,6 +67,7 @@ function toggleAdminPanel() {
   
   if (panel.classList.contains('active')) {
     loadAdminData();
+    renderPendingOrders();
   }
 }
 
@@ -85,8 +87,9 @@ function loadAdminData() {
   let totalOrders = 0;
   let totalPoints = 0;
   
+  // عرض جميع العملاء المسجلين (بما فيهم صاحب المتجر نفسه)
   Object.keys(usersData).forEach(userId => {
-    if (userId !== ADMIN_USER_ID && usersData[userId].profile) {
+    if (usersData[userId].profile) {
       totalCustomers++;
       totalOrders += (usersData[userId].orders || []).length;
       totalPoints += (usersData[userId].points || 0);
@@ -103,27 +106,177 @@ function loadAdminData() {
   document.getElementById('totalCustomers').innerText = totalCustomers;
   document.getElementById('totalOrders').innerText = totalOrders;
   document.getElementById('totalPoints').innerText = totalPoints;
+  document.getElementById('pendingCount').innerText = pendingOrders.length;
   
   // عرض قائمة العملاء
+  renderCustomersList();
+  
+  // عرض سجل النقاط
+  renderPointsLog();
+  
+  console.log('Admin data loaded');
+}
+
+function renderCustomersList() {
   const customersList = document.getElementById('customersList');
   customersList.innerHTML = '';
   
-  Object.keys(usersData).forEach(userId => {
-    if (userId !== ADMIN_USER_ID && usersData[userId].profile) {
-      const user = usersData[userId];
+  // ترتيب العملاء حسب تاريخ الانضمام (الأحدث أولاً)
+  const sortedCustomers = Object.keys(usersData)
+    .filter(userId => usersData[userId].profile)
+    .sort((a, b) => {
+      const dateA = usersData[a].joinDate || '2000-01-01';
+      const dateB = usersData[b].joinDate || '2000-01-01';
+      return dateB.localeCompare(dateA);
+    });
+  
+  sortedCustomers.forEach(userId => {
+    const user = usersData[userId];
+    if (user.profile) {
       customersList.innerHTML += `
         <div class="customer-item">
           <div class="customer-info">
             <span class="customer-name">${user.profile.district}</span>
             <span class="customer-address">${user.profile.street} - ${user.profile.home}</span>
+            <div class="customer-join-date">📅 تاريخ التسجيل: ${user.joinDate || 'غير معروف'}</div>
           </div>
           <div class="customer-points">${user.points || 0} نقطة</div>
         </div>
       `;
     }
   });
+}
+
+function renderPointsLog() {
+  const logDiv = document.getElementById('pointsLog');
+  logDiv.innerHTML = '';
   
-  console.log('Admin data loaded');
+  // جمع كل سجلات النقاط من جميع المستخدمين
+  const allLogs = [];
+  
+  Object.keys(usersData).forEach(userId => {
+    if (usersData[userId].pointsHistory) {
+      usersData[userId].pointsHistory.forEach(log => {
+        allLogs.push({
+          ...log,
+          user: userId
+        });
+      });
+    }
+  });
+  
+  // ترتيب حسب التاريخ (الأحدث أولاً)
+  allLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  if (allLogs.length === 0) {
+    logDiv.innerHTML = '<p style="text-align:center; color:#888;">لا يوجد سجل نقاط</p>';
+    return;
+  }
+  
+  allLogs.slice(0, 20).forEach(log => {
+    const user = usersData[log.user]?.profile;
+    const userInfo = user ? `${user.district} - ${user.street}` : 'مستخدم غير معروف';
+    
+    logDiv.innerHTML += `
+      <div class="log-item">
+        <div style="display:flex; justify-content:space-between;">
+          <span>${userInfo}</span>
+          <small>${log.date}</small>
+        </div>
+        <div>
+          <strong style="color:${log.type === 'earned' ? '#28a745' : '#dc3545'}">
+            ${log.type === 'earned' ? '+' : '-'} ${log.points} نقطة
+          </strong>
+          ${log.total ? `<br><small>💰 قيمة الطلب: ${log.total} ₺</small>` : ''}
+          ${log.addedBy === 'admin' ? '<br><small>👑 تمت الإضافة بواسطة المدير</small>' : ''}
+        </div>
+      </div>
+    `;
+  });
+}
+
+function renderPendingOrders() {
+  const container = document.getElementById('pendingOrdersList');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (pendingOrders.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#888;">لا توجد طلبات جديدة</p>';
+    return;
+  }
+  
+  pendingOrders.forEach((order, index) => {
+    container.innerHTML += `
+      <div class="pending-order-item">
+        <div class="pending-order-header">
+          <span class="pending-order-title">🆕 طلب جديد #${index + 1}</span>
+          <span class="pending-order-amount">💰 ${order.total} ₺</span>
+        </div>
+        <div class="pending-order-details">
+          <div>📍 ${order.address}</div>
+          <div>🕒 ${order.date}</div>
+          <div>📦 ${order.items.length} منتج</div>
+        </div>
+        <div class="pending-order-actions">
+          <button class="pending-order-btn add-points-btn" onclick="showAddPointsForOrder(${index})">
+            <i class="fas fa-star"></i> إضافة نقاط
+          </button>
+          <button class="pending-order-btn ignore-btn" onclick="ignoreOrder(${index})">
+            <i class="fas fa-times"></i> تجاهل
+          </button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function showAddPointsForOrder(orderIndex) {
+  const order = pendingOrders[orderIndex];
+  
+  // تعبئة نموذج إضافة النقاط
+  const customerSelect = document.getElementById('adminCustomer');
+  
+  // البحث عن العميل
+  let foundCustomerId = null;
+  Object.keys(usersData).forEach(userId => {
+    if (usersData[userId].profile) {
+      const profile = usersData[userId].profile;
+      const address = `${profile.district} - ${profile.street} - ${profile.home}`;
+      if (address === order.address) {
+        foundCustomerId = userId;
+      }
+    }
+  });
+  
+  if (foundCustomerId) {
+    customerSelect.value = foundCustomerId;
+    document.getElementById('adminAmount').value = parseFloat(order.total);
+    
+    // إزالة الطلب من قائمة الانتظار
+    pendingOrders.splice(orderIndex, 1);
+    localStorage.setItem('pendingOrders', JSON.stringify(pendingOrders));
+    
+    // تحديث العرض
+    renderPendingOrders();
+    document.getElementById('pendingCount').innerText = pendingOrders.length;
+    
+    showNotification('✅ تم نقل الطلب لإضافة النقاط', 'success');
+  } else {
+    showNotification('❌ لم يتم العثور على العميل', 'error');
+  }
+}
+
+function ignoreOrder(index) {
+  if (!confirm('هل تريد تجاهل هذا الطلب؟')) return;
+  
+  pendingOrders.splice(index, 1);
+  localStorage.setItem('pendingOrders', JSON.stringify(pendingOrders));
+  
+  renderPendingOrders();
+  document.getElementById('pendingCount').innerText = pendingOrders.length;
+  
+  showNotification('🗑️ تم تجاهل الطلب', 'info');
 }
 
 function addPointsByAdmin() {
@@ -135,8 +288,8 @@ function addPointsByAdmin() {
     return;
   }
   
-  // حساب النقاط (كل 10 ريال = نقطة)
-  const pointsToAdd = Math.floor(amount / 10);
+  // حساب النقاط (كل 30 ليرة = نقطة)
+  const pointsToAdd = Math.floor(amount / 30);
   
   if (usersData[customerId]) {
     if (!usersData[customerId].points) usersData[customerId].points = 0;
@@ -263,7 +416,7 @@ function saveClientData() {
     localStorage.setItem("currentUser", ADMIN_USER_ID);
     localStorage.setItem("usersData", JSON.stringify(usersData));
     
-    showNotification(`👑 مرحباً صاحب المتجر`, "success");
+    showNotification(`👑 مرحباً خليل كيف الحال`, "success");
     showMainSite();
     return;
   }
@@ -376,35 +529,6 @@ function updatePointsDisplay() {
   });
 }
 
-function calculatePoints(total) {
-  return Math.floor(total / 10); // كل 10 ريال = نقطة واحدة
-}
-
-function addPoints(amount) {
-  const pointsEarned = calculatePoints(amount);
-  userPoints += pointsEarned;
-  
-  pointsHistory.unshift({
-    date: new Date().toLocaleDateString('ar-EG'),
-    points: pointsEarned,
-    total: amount,
-    type: 'earned'
-  });
-  
-  if (currentUser && usersData[currentUser]) {
-    usersData[currentUser].points = userPoints;
-    usersData[currentUser].pointsHistory = pointsHistory;
-    localStorage.setItem('usersData', JSON.stringify(usersData));
-  }
-  
-  updatePointsDisplay();
-  
-  // رسالة ترحيبية بالنقاط
-  if (pointsEarned > 0) {
-    showNotification(`🎉 حصلت على ${pointsEarned} نقطة!`, 'success');
-  }
-}
-
 function showLoyaltyInfo() {
   const modal = document.getElementById('loyaltyModal');
   document.getElementById('modalPoints').innerText = userPoints;
@@ -424,6 +548,7 @@ function showLoyaltyInfo() {
             ${item.type === 'earned' ? '+' : '-'} ${item.points} نقطة
           </span>
           ${item.total ? `<br><small>قيمة الطلب: ${item.total} ₺</small>` : ''}
+          ${item.addedBy === 'admin' ? '<br><small>👑 تمت الإضافة بواسطة المدير</small>' : ''}
         </div>
       `;
     });
@@ -440,12 +565,12 @@ function closeLoyaltyModal() {
 
 const products = [
   { name: "صابون سائل", price: 35, img: "IMGS/صابون سائل.jpeg", category: "منظفات", available: true },
-  { name: "سائل جلي", price: 15, img: "IMGS/سائل جلي.jpeg", category: "منظفات", available: true },
-  { name: "معطر جو", price: 25, img: "IMGS/معطر.jpeg", category: "معطرات", available: false }, // غير متوفر
-  { name: "دواء غسيل اوتوماتيك", price: 45, img: "IMGS/دواء غسيل.jpeg", category: "منظفات", available: true },
+  { name: "سائل جلي", price: 12, img: "IMGS/سائل جلي.jpeg", category: "منظفات", available: true },
+  { name: "معطر جو", price: 25, img: "IMGS/معطر.jpeg", category: "معطرات", available: false },
+  { name: "دواء غسيل اوتوماتيك", price: 48, img: "IMGS/دواء غسيل.jpeg", category: "منظفات", available: true },
   { name: "دواء غسيل عادي", price: 45, img: "IMGS/دواء غسيل.jpeg", category: "منظفات", available: true },
-  { name: "كلور", price: 13, img: "IMGS/كلور.jpeg", category: "منظفات", available: true },
-  { name: "شامبو بالعسل", price: 110, img: "IMGS/شامبو عسل.jpeg", category: "شامبو", available: false }, // غير متوفر
+  { name: "كلور", price: 12, img: "IMGS/كلور.jpeg", category: "منظفات", available: true },
+  { name: "شامبو بالعسل", price: 110, img: "IMGS/شامبو عسل.jpeg", category: "شامبو", available: false },
   { name: "عملاق", price: 55, img: "IMGS/عملاق.jpeg", category: "منظفات", available: true },
   { name: "فلاش", price: 25, img: "IMGS/فلاش.jpeg", category: "منظفات", available: true }
 ];
@@ -605,10 +730,6 @@ function renderCart() {
     totalElement.innerHTML = `💰 الإجمالي: ${total.toFixed(2)} ${currency}`;
   }
   
-  // عرض النقاط التي سيحصل عليها
-  const pointsEarned = calculatePoints(total);
-  document.getElementById('pointsEarned').innerHTML = `🌟 ستحصل على ${pointsEarned} نقطة`;
-  
   let floatingCount = document.getElementById("floatingCount");
   if (floatingCount) {
     floatingCount.innerText = cart.length;
@@ -741,8 +862,8 @@ function sendWhatsApp() {
   let address = `${user.district} - حارة ${user.street} - بيت ${user.home}`;
   let total = cart.reduce((s, i) => s + parseFloat(i.total), 0).toFixed(2);
   
-  // حساب النقاط المكتسبة
-  let pointsEarned = calculatePoints(total);
+  // حساب النقاط (فقط للعرض - لا تضاف)
+  let pointsEarned = Math.floor(total / 10);
 
   let order = {
     address: address,
@@ -752,11 +873,17 @@ function sendWhatsApp() {
     points: pointsEarned
   };
 
+  // حفظ الطلب في سجل العميل
   ordersHistory.unshift(order);
   
-  // إضافة النقاط للمستخدم - فقط عند إرسال الطلب
-  addPoints(total);
+  // إضافة الطلب إلى قائمة الانتظار لصاحب المتجر
+  pendingOrders.unshift({
+    ...order,
+    customerId: currentUser,
+    status: 'pending'
+  });
   
+  localStorage.setItem('pendingOrders', JSON.stringify(pendingOrders));
   saveUserData();
 
   // رسالة واتساب
@@ -767,7 +894,7 @@ function sendWhatsApp() {
   order.items.forEach(i => msg += i + "\n");
   msg += `──────────────\n`;
   msg += `💰 *الإجمالي:* ${total} ${currency}\n`;
-  msg += `🌟 *النقاط المكتسبة:* ${pointsEarned}\n`;
+  msg += `🌟 *النقاط المستحقة:* ${pointsEarned}\n`;
   msg += `🕒 *التاريخ:* ${date}\n`;
   msg += `──────────────\n`;
   msg += `✅ شكراً لتسوقك من معمل النهضة`;
@@ -777,6 +904,12 @@ function sendWhatsApp() {
   // تفريغ السلة بعد إرسال الطلب
   clearCart();
   showNotification("📤 تم إرسال الطلب", "success");
+  
+  // إذا كان صاحب المتجر مسجل الدخول، نحدث الصفحة
+  if (currentUser === ADMIN_USER_ID) {
+    loadAdminData();
+    renderPendingOrders();
+  }
 }
 
 // =============== واتساب للملاحظات ===============
@@ -811,7 +944,7 @@ function sendNoteToWhatsApp() {
   msg += `──────────────\n`;
   msg += `✅ شكراً لتواصلك معنا`;
 
-  window.open("https://wa.me/966225386048?text=" + encodeURIComponent(msg), '_blank');
+  window.open("https://wa.me/963947760414?text=" + encodeURIComponent(msg), '_blank');
   
   // تفريغ حقل الملاحظات بعد الإرسال
   document.getElementById("userNote").value = "";
