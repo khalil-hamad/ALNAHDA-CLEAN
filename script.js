@@ -899,7 +899,7 @@ function sendWhatsApp() {
   msg += `──────────────\n`;
   msg += `✅ شكراً لتسوقك من معمل النهضة`;
 
-  window.open("https://wa.me/966225386048?text=" + encodeURIComponent(msg), '_blank');
+  window.open("https://wa.me/963947760414?text=" + encodeURIComponent(msg), '_blank');
 
   // تفريغ السلة بعد إرسال الطلب
   clearCart();
@@ -966,3 +966,4 @@ function showToast(message, type = "info") {
     toast.style.bottom = "80px";
   }, 2000);
 }
+
