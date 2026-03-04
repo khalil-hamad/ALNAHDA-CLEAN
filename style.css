@@ -1605,3 +1605,173 @@ header {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: 5px;
 }
+/* =============== إضافات صفحة المتجر =============== */
+
+.pending-orders-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.pending-order-item {
+  background: #fff3cd;
+  border-right: 4px solid #ffc107;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  animation: pulse 2s infinite;
+}
+
+body.dark-mode .pending-order-item {
+  background: #2a2a4a;
+  color: white;
+}
+
+.pending-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pending-order-title {
+  font-weight: bold;
+  color: #856404;
+}
+
+body.dark-mode .pending-order-title {
+  color: #ffd700;
+}
+
+.pending-order-amount {
+  font-size: 16px;
+  font-weight: bold;
+  color: #28a745;
+}
+
+.pending-order-details {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+body.dark-mode .pending-order-details {
+  color: #ccc;
+}
+
+.pending-order-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pending-order-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.add-points-btn {
+  background: #28a745;
+  color: white;
+}
+
+.ignore-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.points-log {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.log-item {
+  background: #f8f9fa;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  border-right: 3px solid #17a2b8;
+}
+
+body.dark-mode .log-item {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.log-item small {
+  color: #6c757d;
+}
+
+body.dark-mode .log-item small {
+  color: #aaa;
+}
+
+.customers-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.customer-item {
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-right: 3px solid var(--primary);
+}
+
+body.dark-mode .customer-item {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.customer-info {
+  flex: 1;
+}
+
+.customer-name {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--dark);
+}
+
+.customer-address {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.customer-points {
+  background: #f1c40f;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.customer-join-date {
+  font-size: 10px;
+  color: var(--gray);
+  margin-top: 3px;
+}
+
+.admin-stat.highlight {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+  color: white;
+}
+
+.admin-stat.highlight .stat-value {
+  color: white;
+}
