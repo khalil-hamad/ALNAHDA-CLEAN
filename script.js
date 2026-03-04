@@ -10,8 +10,8 @@ let pointsHistory = [];
 let pendingOrders = JSON.parse(localStorage.getItem("pendingOrders")) || [];
 
 // كلمة سر صاحب المتجر (يمكن تغييرها)
-const ADMIN_PASSWORD = "khalil996225386048";
-const ADMIN_USER_ID = "admin_nehda_store";
+const ADMIN_PASSWORD = "khalil";
+const ADMIN_USER_ID = "996225386048";
 
 // =============== التهيئة ===============
 
@@ -966,4 +966,5 @@ function showToast(message, type = "info") {
     toast.style.bottom = "80px";
   }, 2000);
 }
+
 
