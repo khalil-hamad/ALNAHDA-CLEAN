@@ -1,327 +1,43 @@
 const currency = "₺";
 
+// رقم واتساب المحدث
+const WHATSAPP_NUMBER = "963947760414";
+
 // متغيرات عامة
 let currentUser = localStorage.getItem("currentUser");
 let usersData = JSON.parse(localStorage.getItem("usersData")) || {};
 let cart = [];
 let ordersHistory = [];
-let userPoints = 0;
-let pointsHistory = [];
-let pendingOrders = JSON.parse(localStorage.getItem("pendingOrders")) || [];
 
-// كلمة سر صاحب المتجر (يمكن تغييرها)
-const ADMIN_PASSWORD = "admin123";
-const ADMIN_USER_ID = "996225386048";
+// عداد الطلبات
+let ordersCount = parseInt(localStorage.getItem("ordersCount")) || 0;
 
 // =============== التهيئة ===============
 
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM loaded', currentUser);
-  
-  // التحقق من الوضع الليلي المحفوظ
-  if (localStorage.getItem('darkMode') === 'enabled') {
-    document.body.classList.add('dark-mode');
-    document.getElementById('darkModeBtn').innerHTML = '<i class="fas fa-sun"></i>';
-  }
-  
   if (currentUser && usersData[currentUser]) {
     showMainSite();
-    // التحقق إذا كان المستخدم هو صاحب المتجر
-    checkIfAdmin();
   } else {
     showLoginScreen();
   }
+  
+  // تحديث عداد الطلبات
+  updateOrdersCounter();
 });
 
-// =============== التحقق من صاحب المتجر ===============
+// =============== عداد الطلبات ===============
 
-function checkIfAdmin() {
-  console.log('Checking admin, currentUser:', currentUser);
-  console.log('Admin ID:', ADMIN_USER_ID);
-  
-  const adminBtn = document.getElementById('adminBtn');
-  if (!adminBtn) {
-    console.log('Admin button not found');
-    return;
-  }
-  
-  if (currentUser === ADMIN_USER_ID) {
-    console.log('User is admin - showing button');
-    adminBtn.style.display = 'flex';
-  } else {
-    console.log('User is not admin - hiding button');
-    adminBtn.style.display = 'none';
+function updateOrdersCounter() {
+  const counterElement = document.getElementById('ordersCount');
+  if (counterElement) {
+    counterElement.innerText = ordersCount.toString().padStart(2, '0');
   }
 }
 
-function toggleAdminPanel() {
-  console.log('Toggling admin panel');
-  const panel = document.getElementById('adminPanel');
-  if (!panel) {
-    console.log('Admin panel not found');
-    return;
-  }
-  
-  panel.classList.toggle('active');
-  console.log('Panel active:', panel.classList.contains('active'));
-  
-  if (panel.classList.contains('active')) {
-    loadAdminData();
-    renderPendingOrders();
-  }
-}
-
-function loadAdminData() {
-  console.log('Loading admin data');
-  
-  // تحميل قائمة العملاء
-  const customerSelect = document.getElementById('adminCustomer');
-  if (!customerSelect) {
-    console.log('Customer select not found');
-    return;
-  }
-  
-  customerSelect.innerHTML = '<option value="">اختر العميل</option>';
-  
-  let totalCustomers = 0;
-  let totalOrders = 0;
-  let totalPoints = 0;
-  
-  // عرض جميع العملاء المسجلين (بما فيهم صاحب المتجر نفسه)
-  Object.keys(usersData).forEach(userId => {
-    if (usersData[userId].profile) {
-      totalCustomers++;
-      totalOrders += (usersData[userId].orders || []).length;
-      totalPoints += (usersData[userId].points || 0);
-      
-      const profile = usersData[userId].profile;
-      customerSelect.innerHTML += `
-        <option value="${userId}">
-          ${profile.district} - ${profile.street} - ${profile.home}
-        </option>
-      `;
-    }
-  });
-  
-  document.getElementById('totalCustomers').innerText = totalCustomers;
-  document.getElementById('totalOrders').innerText = totalOrders;
-  document.getElementById('totalPoints').innerText = totalPoints;
-  document.getElementById('pendingCount').innerText = pendingOrders.length;
-  
-  // عرض قائمة العملاء
-  renderCustomersList();
-  
-  // عرض سجل النقاط
-  renderPointsLog();
-  
-  console.log('Admin data loaded');
-}
-
-function renderCustomersList() {
-  const customersList = document.getElementById('customersList');
-  customersList.innerHTML = '';
-  
-  // ترتيب العملاء حسب تاريخ الانضمام (الأحدث أولاً)
-  const sortedCustomers = Object.keys(usersData)
-    .filter(userId => usersData[userId].profile)
-    .sort((a, b) => {
-      const dateA = usersData[a].joinDate || '2000-01-01';
-      const dateB = usersData[b].joinDate || '2000-01-01';
-      return dateB.localeCompare(dateA);
-    });
-  
-  sortedCustomers.forEach(userId => {
-    const user = usersData[userId];
-    if (user.profile) {
-      customersList.innerHTML += `
-        <div class="customer-item">
-          <div class="customer-info">
-            <span class="customer-name">${user.profile.district}</span>
-            <span class="customer-address">${user.profile.street} - ${user.profile.home}</span>
-            <div class="customer-join-date">📅 تاريخ التسجيل: ${user.joinDate || 'غير معروف'}</div>
-          </div>
-          <div class="customer-points">${user.points || 0} نقطة</div>
-        </div>
-      `;
-    }
-  });
-}
-
-function renderPointsLog() {
-  const logDiv = document.getElementById('pointsLog');
-  logDiv.innerHTML = '';
-  
-  // جمع كل سجلات النقاط من جميع المستخدمين
-  const allLogs = [];
-  
-  Object.keys(usersData).forEach(userId => {
-    if (usersData[userId].pointsHistory) {
-      usersData[userId].pointsHistory.forEach(log => {
-        allLogs.push({
-          ...log,
-          user: userId
-        });
-      });
-    }
-  });
-  
-  // ترتيب حسب التاريخ (الأحدث أولاً)
-  allLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
-  
-  if (allLogs.length === 0) {
-    logDiv.innerHTML = '<p style="text-align:center; color:#888;">لا يوجد سجل نقاط</p>';
-    return;
-  }
-  
-  allLogs.slice(0, 20).forEach(log => {
-    const user = usersData[log.user]?.profile;
-    const userInfo = user ? `${user.district} - ${user.street}` : 'مستخدم غير معروف';
-    
-    logDiv.innerHTML += `
-      <div class="log-item">
-        <div style="display:flex; justify-content:space-between;">
-          <span>${userInfo}</span>
-          <small>${log.date}</small>
-        </div>
-        <div>
-          <strong style="color:${log.type === 'earned' ? '#28a745' : '#dc3545'}">
-            ${log.type === 'earned' ? '+' : '-'} ${log.points} نقطة
-          </strong>
-          ${log.total ? `<br><small>💰 قيمة الطلب: ${log.total} ₺</small>` : ''}
-          ${log.addedBy === 'admin' ? '<br><small>👑 تمت الإضافة بواسطة المدير</small>' : ''}
-        </div>
-      </div>
-    `;
-  });
-}
-
-function renderPendingOrders() {
-  const container = document.getElementById('pendingOrdersList');
-  if (!container) return;
-  
-  container.innerHTML = '';
-  
-  if (pendingOrders.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#888;">لا توجد طلبات جديدة</p>';
-    return;
-  }
-  
-  pendingOrders.forEach((order, index) => {
-    container.innerHTML += `
-      <div class="pending-order-item">
-        <div class="pending-order-header">
-          <span class="pending-order-title">🆕 طلب جديد #${index + 1}</span>
-          <span class="pending-order-amount">💰 ${order.total} ₺</span>
-        </div>
-        <div class="pending-order-details">
-          <div>📍 ${order.address}</div>
-          <div>🕒 ${order.date}</div>
-          <div>📦 ${order.items.length} منتج</div>
-        </div>
-        <div class="pending-order-actions">
-          <button class="pending-order-btn add-points-btn" onclick="showAddPointsForOrder(${index})">
-            <i class="fas fa-star"></i> إضافة نقاط
-          </button>
-          <button class="pending-order-btn ignore-btn" onclick="ignoreOrder(${index})">
-            <i class="fas fa-times"></i> تجاهل
-          </button>
-        </div>
-      </div>
-    `;
-  });
-}
-
-function showAddPointsForOrder(orderIndex) {
-  const order = pendingOrders[orderIndex];
-  
-  // تعبئة نموذج إضافة النقاط
-  const customerSelect = document.getElementById('adminCustomer');
-  
-  // البحث عن العميل
-  let foundCustomerId = null;
-  Object.keys(usersData).forEach(userId => {
-    if (usersData[userId].profile) {
-      const profile = usersData[userId].profile;
-      const address = `${profile.district} - ${profile.street} - ${profile.home}`;
-      if (address === order.address) {
-        foundCustomerId = userId;
-      }
-    }
-  });
-  
-  if (foundCustomerId) {
-    customerSelect.value = foundCustomerId;
-    document.getElementById('adminAmount').value = parseFloat(order.total);
-    
-    // إزالة الطلب من قائمة الانتظار
-    pendingOrders.splice(orderIndex, 1);
-    localStorage.setItem('pendingOrders', JSON.stringify(pendingOrders));
-    
-    // تحديث العرض
-    renderPendingOrders();
-    document.getElementById('pendingCount').innerText = pendingOrders.length;
-    
-    showNotification('✅ تم نقل الطلب لإضافة النقاط', 'success');
-  } else {
-    showNotification('❌ لم يتم العثور على العميل', 'error');
-  }
-}
-
-function ignoreOrder(index) {
-  if (!confirm('هل تريد تجاهل هذا الطلب؟')) return;
-  
-  pendingOrders.splice(index, 1);
-  localStorage.setItem('pendingOrders', JSON.stringify(pendingOrders));
-  
-  renderPendingOrders();
-  document.getElementById('pendingCount').innerText = pendingOrders.length;
-  
-  showNotification('🗑️ تم تجاهل الطلب', 'info');
-}
-
-function addPointsByAdmin() {
-  const customerId = document.getElementById('adminCustomer').value;
-  const amount = parseFloat(document.getElementById('adminAmount').value);
-  
-  if (!customerId || !amount || amount <= 0) {
-    showNotification('❌ يرجى اختيار العميل وإدخال المبلغ', 'error');
-    return;
-  }
-  
-  // حساب النقاط (كل 30 ليرة = نقطة)
-  const pointsToAdd = Math.floor(amount / 30);
-  
-  if (usersData[customerId]) {
-    if (!usersData[customerId].points) usersData[customerId].points = 0;
-    if (!usersData[customerId].pointsHistory) usersData[customerId].pointsHistory = [];
-    
-    usersData[customerId].points += pointsToAdd;
-    
-    usersData[customerId].pointsHistory.unshift({
-      date: new Date().toLocaleDateString('ar-EG'),
-      points: pointsToAdd,
-      total: amount,
-      type: 'earned',
-      addedBy: 'admin'
-    });
-    
-    localStorage.setItem('usersData', JSON.stringify(usersData));
-    
-    const result = document.getElementById('adminPointsResult');
-    result.innerHTML = `✅ تم إضافة ${pointsToAdd} نقطة للعميل بنجاح`;
-    result.classList.add('active');
-    
-    document.getElementById('adminAmount').value = '';
-    
-    showNotification(`✅ تم إضافة ${pointsToAdd} نقطة`, 'success');
-    
-    setTimeout(() => {
-      result.classList.remove('active');
-    }, 3000);
-    
-    // تحديث الإحصائيات
-    loadAdminData();
-  }
+function incrementOrdersCounter() {
+  ordersCount++;
+  localStorage.setItem("ordersCount", ordersCount);
+  updateOrdersCounter();
 }
 
 // =============== نظام تسجيل الدخول ===============
@@ -343,7 +59,6 @@ function showMainSite() {
   
   // تحميل البيانات
   loadUserData();
-  loadUserPoints();
   displayProducts();
   renderCart();
   renderOrders();
@@ -352,11 +67,6 @@ function showMainSite() {
   setTimeout(() => {
     showNotification('👋 أهلاً بك في معمل النهضة', 'info', 3000);
   }, 1000);
-  
-  // التحقق من صاحب المتجر بعد تحميل الموقع
-  setTimeout(() => {
-    checkIfAdmin();
-  }, 500);
 }
 
 function loadUserData() {
@@ -375,9 +85,7 @@ function saveUserData() {
       usersData[currentUser] = {
         profile: {},
         orders: [],
-        cart: [],
-        points: 0,
-        pointsHistory: []
+        cart: []
       };
     }
     usersData[currentUser].cart = cart;
@@ -396,32 +104,7 @@ function saveClientData() {
     return;
   }
 
-  // التحقق إذا كان هذا هو صاحب المتجر
-  if (street.toLowerCase() === 'admin' && home === '123') {
-    console.log('Admin login detected');
-    currentUser = ADMIN_USER_ID;
-    
-    if (!usersData[ADMIN_USER_ID]) {
-      usersData[ADMIN_USER_ID] = {
-        profile: { district, street, home },
-        orders: [],
-        cart: [],
-        points: 0,
-        pointsHistory: [],
-        isAdmin: true,
-        joinDate: new Date().toLocaleDateString("ar-EG")
-      };
-    }
-    
-    localStorage.setItem("currentUser", ADMIN_USER_ID);
-    localStorage.setItem("usersData", JSON.stringify(usersData));
-    
-    showNotification(`👑 مرحباً خليل كيف الحال`, "success");
-    showMainSite();
-    return;
-  }
-
-  // إنشاء معرف فريد للمستخدم العادي (الحي + الشارع + البيت)
+  // إنشاء معرف فريد للمستخدم
   let userId = `${district}_${street}_${home}`;
   
   if (!usersData[userId]) {
@@ -429,8 +112,6 @@ function saveClientData() {
       profile: { district, street, home },
       orders: [],
       cart: [],
-      points: 0,
-      pointsHistory: [],
       joinDate: new Date().toLocaleDateString("ar-EG")
     };
   } else {
@@ -457,23 +138,6 @@ function showFullAddress() {
   if (currentUser && usersData[currentUser] && usersData[currentUser].profile) {
     let profile = usersData[currentUser].profile;
     showNotification(`📍 ${profile.district} - حارة ${profile.street} - بيت ${profile.home}`, "info");
-  }
-}
-
-// =============== الوضع الليلي ===============
-
-function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
-  const btn = document.getElementById('darkModeBtn');
-  
-  if (document.body.classList.contains('dark-mode')) {
-    localStorage.setItem('darkMode', 'enabled');
-    btn.innerHTML = '<i class="fas fa-sun"></i>';
-    showNotification('🌙 تم تفعيل الوضع الليلي', 'info');
-  } else {
-    localStorage.setItem('darkMode', 'disabled');
-    btn.innerHTML = '<i class="fas fa-moon"></i>';
-    showNotification('☀️ تم تفعيل الوضع النهاري', 'info');
   }
 }
 
@@ -510,55 +174,6 @@ function showNotification(message, type = 'info', duration = 5000) {
   setTimeout(() => {
     notification.remove();
   }, duration);
-}
-
-// =============== نظام النقاط ===============
-
-function loadUserPoints() {
-  if (currentUser && usersData[currentUser]) {
-    userPoints = usersData[currentUser].points || 0;
-    pointsHistory = usersData[currentUser].pointsHistory || [];
-  }
-  updatePointsDisplay();
-}
-
-function updatePointsDisplay() {
-  const pointsElements = document.querySelectorAll('#pointsDisplay');
-  pointsElements.forEach(el => {
-    if (el) el.innerText = userPoints;
-  });
-}
-
-function showLoyaltyInfo() {
-  const modal = document.getElementById('loyaltyModal');
-  document.getElementById('modalPoints').innerText = userPoints;
-  
-  // عرض تاريخ النقاط
-  const historyDiv = document.getElementById('pointsHistory');
-  historyDiv.innerHTML = '';
-  
-  if (pointsHistory.length === 0) {
-    historyDiv.innerHTML = '<p style="text-align:center; color:#888;">لا يوجد سابق نقاط</p>';
-  } else {
-    pointsHistory.slice(0, 10).forEach(item => {
-      historyDiv.innerHTML += `
-        <div class="order-item" style="margin-bottom:5px;">
-          <small>${item.date}</small><br>
-          <span style="color: ${item.type === 'earned' ? '#2ecc71' : '#e74c3c'};">
-            ${item.type === 'earned' ? '+' : '-'} ${item.points} نقطة
-          </span>
-          ${item.total ? `<br><small>قيمة الطلب: ${item.total} ₺</small>` : ''}
-          ${item.addedBy === 'admin' ? '<br><small>👑 تمت الإضافة بواسطة المدير</small>' : ''}
-        </div>
-      `;
-    });
-  }
-  
-  modal.classList.add('active');
-}
-
-function closeLoyaltyModal() {
-  document.getElementById('loyaltyModal').classList.remove('active');
 }
 
 // =============== المنتجات ===============
@@ -608,22 +223,6 @@ function displayProducts() {
           `}
         </div>
       </div>`;
-  });
-}
-
-function filterCategory(category) {
-  let cards = document.querySelectorAll('.card');
-  let btns = document.querySelectorAll('.category-btn');
-  
-  btns.forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
-  
-  cards.forEach(card => {
-    if (category === 'all' || card.dataset.category === category) {
-      card.style.display = 'flex';
-    } else {
-      card.style.display = 'none';
-    }
   });
 }
 
@@ -717,7 +316,7 @@ function renderCart() {
           </div>
           <div>
             <strong>${item.total} ${currency}</strong>
-            <button onclick="removeFromCart(${index})" style="width:32px; height:32px; border-radius:50%; background:#e74c3c; color:white; border:none; margin-right:5px;">
+            <button onclick="removeFromCart(${index})" style="width:32px; height:32px; border-radius:50%; background:#ef476f; color:white; border:none; margin-right:5px;">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -759,11 +358,9 @@ function clearCart() {
 function toggleCart() {
   let cartElement = document.getElementById("cart");
   let ordersElement = document.getElementById("orders");
-  let adminPanel = document.getElementById("adminPanel");
   
   cartElement.classList.toggle("active");
   ordersElement.classList.remove("active");
-  if (adminPanel) adminPanel.classList.remove("active");
 }
 
 // =============== إدارة الطلبات ===============
@@ -771,11 +368,9 @@ function toggleCart() {
 function toggleOrders() {
   let ordersElement = document.getElementById("orders");
   let cartElement = document.getElementById("cart");
-  let adminPanel = document.getElementById("adminPanel");
   
   ordersElement.classList.toggle("active");
   cartElement.classList.remove("active");
-  if (adminPanel) adminPanel.classList.remove("active");
   renderOrders();
 }
 
@@ -802,7 +397,7 @@ function renderOrders() {
       <div class="order-item">
         <div style="display:flex; justify-content:space-between; align-items:start;">
           <b>📍 ${order.address || 'عنوان غير محدد'}</b>
-          <button onclick="deleteOrder(${index})" style="background:none; border:none; color:#e74c3c; font-size:18px; width:auto; padding:5px;">
+          <button onclick="deleteOrder(${index})" style="background:none; border:none; color:#ef476f; font-size:18px; width:auto; padding:5px;">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -812,9 +407,6 @@ function renderOrders() {
           ${order.items.length > 3 ? `<br>... و${order.items.length - 3} أخرى` : ''}
         </div>
         <b>💰 ${order.total} ${currency}</b>
-        <div style="margin-top:5px; color:#f39c12;">
-          <i class="fas fa-star"></i> ${order.points || 0} نقطة
-        </div>
       </div>`;
   });
 }
@@ -861,30 +453,20 @@ function sendWhatsApp() {
 
   let address = `${user.district} - حارة ${user.street} - بيت ${user.home}`;
   let total = cart.reduce((s, i) => s + parseFloat(i.total), 0).toFixed(2);
-  
-  // حساب النقاط (فقط للعرض - لا تضاف)
-  let pointsEarned = Math.floor(total / 10);
 
   let order = {
     address: address,
     date: date,
     items: cart.map(i => `• ${i.name} - ${i.kg} كغ - ${i.total} ${currency}`),
-    total: total,
-    points: pointsEarned
+    total: total
   };
 
   // حفظ الطلب في سجل العميل
   ordersHistory.unshift(order);
-  
-  // إضافة الطلب إلى قائمة الانتظار لصاحب المتجر
-  pendingOrders.unshift({
-    ...order,
-    customerId: currentUser,
-    status: 'pending'
-  });
-  
-  localStorage.setItem('pendingOrders', JSON.stringify(pendingOrders));
   saveUserData();
+
+  // زيادة عداد الطلبات
+  incrementOrdersCounter();
 
   // رسالة واتساب
   let msg = `🛍️ *طلب جديد*\n\n`;
@@ -894,22 +476,15 @@ function sendWhatsApp() {
   order.items.forEach(i => msg += i + "\n");
   msg += `──────────────\n`;
   msg += `💰 *الإجمالي:* ${total} ${currency}\n`;
-  msg += `🌟 *النقاط المستحقة:* ${pointsEarned}\n`;
   msg += `🕒 *التاريخ:* ${date}\n`;
   msg += `──────────────\n`;
   msg += `✅ شكراً لتسوقك من معمل النهضة`;
 
-  window.open("https://wa.me/963947760414?text=" + encodeURIComponent(msg), '_blank');
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(msg), '_blank');
 
   // تفريغ السلة بعد إرسال الطلب
   clearCart();
   showNotification("📤 تم إرسال الطلب", "success");
-  
-  // إذا كان صاحب المتجر مسجل الدخول، نحدث الصفحة
-  if (currentUser === ADMIN_USER_ID) {
-    loadAdminData();
-    renderPendingOrders();
-  }
 }
 
 // =============== واتساب للملاحظات ===============
@@ -944,7 +519,7 @@ function sendNoteToWhatsApp() {
   msg += `──────────────\n`;
   msg += `✅ شكراً لتواصلك معنا`;
 
-  window.open("https://wa.me/963947760414?text=" + encodeURIComponent(msg), '_blank');
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(msg), '_blank');
   
   // تفريغ حقل الملاحظات بعد الإرسال
   document.getElementById("userNote").value = "";
@@ -966,5 +541,3 @@ function showToast(message, type = "info") {
     toast.style.bottom = "80px";
   }, 2000);
 }
-
-
