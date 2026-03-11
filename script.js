@@ -179,15 +179,15 @@ function showNotification(message, type = 'info', duration = 5000) {
 // =============== المنتجات ===============
 
 const products = [
-  { name: "صابون سائل", price: 35, img: "IMGS/صابون سائل.jpeg", category: "منظفات", available: true },
-  { name: "سائل جلي", price: 12, img: "IMGS/سائل جلي.jpeg", category: "منظفات", available: true },
-  { name: "معطر جو", price: 25, img: "IMGS/معطر.jpeg", category: "معطرات", available: false },
-  { name: "دواء غسيل اوتوماتيك", price: 48, img: "IMGS/دواء غسيل.jpeg", category: "منظفات", available: true },
-  { name: "دواء غسيل عادي", price: 45, img: "IMGS/دواء غسيل.jpeg", category: "منظفات", available: true },
-  { name: "كلور", price: 12, img: "IMGS/كلور.jpeg", category: "منظفات", available: true },
-  { name: "شامبو بالعسل", price: 110, img: "IMGS/شامبو عسل.jpeg", category: "شامبو", available: false },
-  { name: "عملاق", price: 55, img: "IMGS/عملاق.jpeg", category: "منظفات", available: true },
-  { name: "فلاش", price: 25, img: "IMGS/فلاش.jpeg", category: "منظفات", available: true }
+  { name: "صابون سائل", price: 35, img: "img/صابون سائل.png", category: "منظفات", available: true },
+  { name: "سائل جلي", price: 12, img: "img/سائل جلي.png", category: "منظفات", available: true },
+  { name: "معطر جو", price: 25, img: "img/معطر.png", category: "معطرات", available: false },
+  { name: "دواء غسيل اوتوماتيك", price: 48, img: "img/توماتيك.png", category: "منظفات", available: true },
+  { name: "دواء غسيل عادي", price: 45, img: "img/عادي.png", category: "منظفات", available: true },
+  { name: "كلور", price: 12, img: "img/كلور.png", category: "منظفات", available: true },
+  { name: "شامبو بالعسل", price: 110, img: "img/شامبو عسل.png", category: "شامبو", available: false },
+  { name: "عملاق", price: 55, img: "img/عملاق.png", category: "منظفات", available: true },
+  { name: "فلاش", price: 25, img: "img/فلاش.png", category: "منظفات", available: true }
 ];
 
 function displayProducts() {
@@ -547,3 +547,214 @@ function showToast(message, type = "info") {
   }, 2000);
 }
 
+// =============== نظام معاينة الصور ===============
+
+let currentImageIndex = 0;
+let productImages = [];
+
+// تجميع جميع صور المنتجات
+function collectProductImages() {
+  productImages = [];
+  const cards = document.querySelectorAll('.card img');
+  cards.forEach((img, index) => {
+    productImages.push({
+      src: img.src,
+      alt: img.alt || 'صورة المنتج'
+    });
+    
+    // إضافة حدث النقر للصورة
+    img.style.cursor = 'pointer';
+    img.onclick = function() {
+      openImageModal(index);
+    };
+  });
+}
+
+// فتح نافذة معاينة الصورة
+function openImageModal(index) {
+  currentImageIndex = index;
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  const caption = document.getElementById('modalCaption');
+  
+  modalImg.src = productImages[index].src;
+  caption.innerHTML = productImages[index].alt;
+  
+  modal.classList.add('active');
+  
+  // منع التمرير في الخلفية
+  document.body.style.overflow = 'hidden';
+}
+
+// إغلاق نافذة المعاينة
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  modal.classList.remove('active');
+  
+  // إعادة التمرير
+  document.body.style.overflow = 'auto';
+}
+
+// التنقل بين الصور
+function navigateImage(direction) {
+  currentImageIndex += direction;
+  
+  if (currentImageIndex < 0) {
+    currentImageIndex = productImages.length - 1;
+  } else if (currentImageIndex >= productImages.length) {
+    currentImageIndex = 0;
+  }
+  
+  const modalImg = document.getElementById('modalImage');
+  const caption = document.getElementById('modalCaption');
+  
+  modalImg.src = productImages[currentImageIndex].src;
+  caption.innerHTML = productImages[currentImageIndex].alt;
+}
+
+// تحميل الصورة
+function downloadCurrentImage() {
+  const modalImg = document.getElementById('modalImage');
+  const link = document.createElement('a');
+  link.href = modalImg.src;
+  link.download = `product_${currentImageIndex + 1}.jpg`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  showNotification('✅ جاري تحميل الصورة', 'success');
+}
+
+// إضافة أزرار التنقل في النافذة المنبثقة
+function addNavigationButtons() {
+  const modal = document.getElementById('imageModal');
+  
+  // زر التنقل لليسار
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'nav-btn prev-btn';
+  prevBtn.innerHTML = '❮';
+  prevBtn.onclick = (e) => {
+    e.stopPropagation();
+    navigateImage(-1);
+  };
+  
+  // زر التنقل لليمين
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'nav-btn next-btn';
+  nextBtn.innerHTML = '❯';
+  nextBtn.onclick = (e) => {
+    e.stopPropagation();
+    navigateImage(1);
+  };
+  
+  // زر التحميل
+  const downloadBtn = document.createElement('button');
+  downloadBtn.className = 'download-image';
+  downloadBtn.innerHTML = '<i class="fas fa-download"></i> تحميل الصورة';
+  downloadBtn.onclick = (e) => {
+    e.stopPropagation();
+    downloadCurrentImage();
+  };
+  
+  modal.appendChild(prevBtn);
+  modal.appendChild(nextBtn);
+  modal.appendChild(downloadBtn);
+}
+
+// إضافة تنسيقات أزرار التنقل (أضفها في CSS)
+function addNavButtonStyles() {
+  const style = document.createElement('style');
+  style.textContent = `
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.3s;
+      z-index: 10001;
+    }
+    
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-50%) scale(1.1);
+    }
+    
+    .prev-btn {
+      left: 20px;
+    }
+    
+    .next-btn {
+      right: 20px;
+    }
+    
+    body.dark-mode .nav-btn {
+      background: rgba(0,0,0,0.5);
+    }
+    
+    @media (max-width: 767px) {
+      .nav-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+      }
+      
+      .prev-btn {
+        left: 5px;
+      }
+      
+      .next-btn {
+        right: 5px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// تهيئة نظام معاينة الصور
+function initImagePreview() {
+  // جمع الصور بعد تحميل المنتجات
+  setTimeout(() => {
+    collectProductImages();
+  }, 500);
+  
+  // إضافة أزرار التنقل
+  addNavigationButtons();
+  
+  // إضافة تنسيقات الأزرار
+  addNavButtonStyles();
+  
+  // إضافة دعم لوحة المفاتيح
+  document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('imageModal');
+    if (!modal.classList.contains('active')) return;
+    
+    if (e.key === 'Escape') {
+      closeImageModal();
+    } else if (e.key === 'ArrowLeft') {
+      navigateImage(-1);
+    } else if (e.key === 'ArrowRight') {
+      navigateImage(1);
+    }
+  });
+}
+
+// تشغيل التهيئة عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  // تأخير قليل للتأكد من تحميل المنتجات
+  setTimeout(initImagePreview, 1000);
+});
+
+// إضافة دالة لتحديث الصور عند إضافة منتجات جديدة
+function refreshImages() {
+  collectProductImages();
+}

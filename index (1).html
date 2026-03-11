@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>معمل لمسات للمنظفات</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="img/لوغو.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<!-- شاشة الدخول -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🧴</div>
+    <h2>مرحباً بك في معمل لمسات</h2>
+    <p class="login-subtitle">أدخل عنوان البيت الصحيح للمتابعة يستخدم في توصيل الطلب </p>
+    <select id="district">
+      <option value="">اختر الحي</option>
+      <option>حي النهضة</option>
+      <option>حي النخيل</option>
+      <option>حي الرحمة</option>
+      <option>حي البساتين</option>
+    </select>
+    <input type="text" id="street" placeholder="رقم الحارة">
+    <input type="text" id="home" placeholder="رقم البيت">
+    <button onclick="saveClientData()" class="login-btn">
+      <span>دخول</span>
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <p class="login-note">🔒 بياناتك محفوظة محلياً</p>
+  </div>
+</div>
+
+<!-- الموقع الرئيسي -->
+<div id="mainSite" style="display:none;">
+
+  <!-- عداد الطلبات الجديد -->
+  <div class="orders-counter">
+    <div class="counter-content">
+      <i class="fas fa-chart-line"></i>
+      <span class="counter-label">عدد الطلبات المرسلة:</span>
+      <span class="counter-number" id="ordersCount">0</span>
+    </div>
+  </div>
+
+  <!-- منطقة الإشعارات -->
+  <div id="notificationArea" class="notification-area"></div>
+
+  <!-- الهيدر -->
+  <header>
+    <div class="header-right">
+      <div class="logo">
+        <span class="logo-icon">🧴</span>
+        <span>معمل لمسات للمنظفات</span>
+      </div>
+      <div class="delivery-bar">
+        <span>🚚 توصيل مجاني داخل حي النهضة</span>
+      </div>
+    </div>
+
+    <div class="header-user">
+      <div class="user-profile" onclick="showFullAddress()" id="welcomeUser">
+        <i class="fas fa-map-marker-alt"></i>
+        <span id="userAddress"></span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      
+      <button onclick="toggleOrders()" class="orders-btn">
+        <i class="fas fa-history"></i>
+        <span>طلباتي</span>
+      </button>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- شريط العروض -->
+  <div class="promo-bar">
+    <div class="promo-content">
+      <span class="promo-icon">🔥</span>
+      <span class="promo-text">توصيل مجاني • جودة عالية • أسعار منافسة</span>
+      <span class="promo-icon">✨</span>
+    </div>
+  </div>
+
+  <!-- شريط البحث (بدون فلترة) -->
+
+  <!-- المنتجات -->
+  <section class="products" id="products"></section>
+
+  <!-- قسم الملاحظات -->
+  <div class="notes-section">
+    <div class="notes-header">
+      <i class="fas fa-pen"></i>
+      <h3>ملاحظاتكم</h3>
+    </div>
+    <div class="notes-content">
+      <select id="noteType" class="note-type">
+        <option value="suggestion">💡 اقتراح</option>
+        <option value="complaint">⚠️ شكوى</option>
+        <option value="inquiry">❓ استفسار</option>
+        <option value="praise">🌟 إشادة</option>
+      </select>
+      <textarea id="userNote" placeholder="اكتب ملاحظاتك أو اقتراحاتك هنا..."></textarea>
+      <button onclick="sendNoteToWhatsApp()" class="send-note-btn">
+        <i class="fab fa-whatsapp"></i>
+        إرسال الملاحظات
+      </button>
+    </div>
+  </div>
+
+  <!-- السلة -->
+  <div class="cart" id="cart">
+    <div class="cart-header">
+      <h2><i class="fas fa-shopping-cart"></i> سلة الطلبات</h2>
+      <button class="close-cart" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="cart-footer">
+      <div class="cart-total" id="totalPrice">الإجمالي: 0 ₺</div>
+      <div class="cart-actions">
+        <button class="whatsapp" onclick="sendWhatsApp()">
+          <i class="fab fa-whatsapp"></i> واتساب
+        </button>
+        <button class="clear" onclick="clearCart()">
+          <i class="fas fa-trash"></i> تفريغ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الطلبات السابقة -->
+  <div class="orders" id="orders">
+    <div class="orders-header">
+      <h2><i class="fas fa-history"></i> طلباتي السابقة</h2>
+      <button class="close-orders" onclick="toggleOrders()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="ordersList" class="orders-list"></div>
+  </div>
+
+  <!-- السلة العائمة -->
+  <div class="floating-cart" onclick="toggleCart()">
+    <i class="fas fa-shopping-cart"></i>
+    <span id="floatingCount">0</span>
+  </div>
+
+  <!-- رسالة منبثقة -->
+  <div id="toast" class="toast"></div>
+
+</div>
+<!-- نافذة معاينة الصور -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <span class="close-modal">&times;</span>
+  <img class="modal-content" id="modalImage">
+  <div id="modalCaption" class="modal-caption"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
+
+

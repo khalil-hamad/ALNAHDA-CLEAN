@@ -356,10 +356,17 @@ header {
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition: all 0.3s ease;
+}
+
+.logout-btn i {
+  font-size: 18px;
+  color: white;
 }
 
 .logout-btn:hover {
   background: #d64161;
+  transform: rotate(180deg);
 }
 
 /* =============== شريط العروض =============== */
@@ -677,10 +684,12 @@ header {
   height: 100%;
   background: var(--card-bg);
   box-shadow: 5px 0 30px rgba(0,0,0,0.2);
-  transition: 0.3s ease-in-out;
+  transition: left 0.3s ease-in-out;
   z-index: 2000;
   display: flex;
   flex-direction: column;
+  visibility: visible;
+  opacity: 1;
 }
 
 .cart.active {
@@ -702,6 +711,7 @@ header {
   align-items: center;
   gap: 8px;
   color: white;
+  margin: 0;
 }
 
 .close-cart {
@@ -712,17 +722,28 @@ header {
   height: 35px;
   border-radius: 50%;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: 0.3s;
+  padding: 0;
+}
+
+.close-cart i {
+  font-size: 16px;
+  color: white;
 }
 
 .close-cart:hover {
   background: rgba(255,255,255,0.3);
+  transform: rotate(90deg);
 }
 
 .cart-items {
   flex: 1;
   overflow-y: auto;
   padding: 15px;
+  display: block;
 }
 
 .cart-user {
@@ -752,6 +773,7 @@ header {
   padding: 15px;
   background: #f8f9fa;
   border-top: 2px solid var(--border-color);
+  display: block;
 }
 
 .cart-total {
@@ -1117,4 +1139,156 @@ header {
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: 5px;
+}
+/* =============== نافذة معاينة الصور =============== */
+
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
+}
+
+.image-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.modal-content {
+  max-width: 90%;
+  max-height: 80%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.5);
+  animation: zoomIn 0.3s ease;
+  border: 3px solid white;
+}
+
+.close-modal {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  color: white;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  z-index: 10001;
+}
+
+.close-modal:hover {
+  color: var(--danger);
+  background: rgba(255,255,255,0.3);
+  transform: rotate(90deg);
+}
+
+.modal-caption {
+  color: white;
+  font-size: 18px;
+  padding: 15px;
+  text-align: center;
+  max-width: 80%;
+  background: rgba(0,0,0,0.5);
+  border-radius: 30px;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+/* تأثيرات للصور في المنتجات */
+.card img {
+  cursor: pointer;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.card img:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+/* زر تحميل الصورة */
+.download-image {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 25px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10001;
+  transition: 0.3s;
+  box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+}
+
+.download-image:hover {
+  background: var(--primary-dark);
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+}
+
+.download-image i {
+  font-size: 18px;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* تحسين للوضع الليلي */
+body.dark-mode .modal-content {
+  border-color: var(--primary);
+}
+
+body.dark-mode .close-modal {
+  background: rgba(255,255,255,0.1);
+}
+
+/* تحسين للجوال */
+@media (max-width: 767px) {
+  .close-modal {
+    top: 10px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+  }
+  
+  .modal-caption {
+    font-size: 16px;
+    padding: 10px;
+  }
+  
+  .download-image {
+    bottom: 60px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
 }
