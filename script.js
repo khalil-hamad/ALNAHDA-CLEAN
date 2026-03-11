@@ -436,6 +436,8 @@ function clearAllOrders() {
 
 // =============== واتساب للطلبات ===============
 
+// =============== واتساب للطلبات ===============
+
 function sendWhatsApp() {
   if (cart.length === 0) {
     showNotification("❌ السلة فارغة", "error");
@@ -480,13 +482,16 @@ function sendWhatsApp() {
   msg += `──────────────\n`;
   msg += `✅ شكراً لتسوقك من معمل النهضة`;
 
+  // فتح واتساب
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(msg), '_blank');
 
-  // تفريغ السلة بعد إرسال الطلب
-  clearCart();
+  // ===== مسح السلة بعد إرسال الطلب =====
+  cart = [];  // تفريغ مصفوفة السلة
+  saveUserData();  // حفظ التغيير في localStorage
+  renderCart();  // إعادة عرض السلة (ستظهر فارغة)
+  
   showNotification("📤 تم إرسال الطلب", "success");
 }
-
 // =============== واتساب للملاحظات ===============
 
 function sendNoteToWhatsApp() {
@@ -541,3 +546,4 @@ function showToast(message, type = "info") {
     toast.style.bottom = "80px";
   }, 2000);
 }
+
