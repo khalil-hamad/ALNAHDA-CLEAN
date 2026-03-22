@@ -1,3 +1,97 @@
+// =============== إعدادات Firebase ===============
+const firebaseConfig = {
+  apiKey: "AIzaSyD7WmJ_RsJ4rWZk3V_b2I7-Y9eHdGwNz6g",
+  authDomain: "lamsat-c.firebaseapp.com",
+  projectId: "lamsat-c",
+  storageBucket: "lamsat-c.firebasestorage.app",
+  messagingSenderId: "252887125400",
+  appId: "1:252887125400:web:d5c662eee9f6def88eafed",
+  measurementId: "G-MV0HPM46PB"
+};
+
+// تهيئة Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// =============== مزامنة المنتجات ===============
+
+// تحميل المنتجات من Firebase
+async function loadProductsFromFirebase() {
+  return new Promise((resolve) => {
+    const productsRef = database.ref('products');
+    productsRef.once('value', (snapshot) => {
+      const products = snapshot.val();
+      if (products) {
+        // تحويل الكائن إلى مصفوفة
+        const productsArray = Object.values(products);
+        localStorage.setItem("products", JSON.stringify(productsArray));
+        resolve(productsArray);
+      } else {
+        // لا توجد منتجات في Firebase، نستخدم الافتراضية
+        const defaultProducts = getDefaultProducts();
+        saveProductsToFirebase(defaultProducts);
+        resolve(defaultProducts);
+      }
+    });
+  });
+}
+
+// حفظ المنتجات إلى Firebase
+function saveProductsToFirebase(products) {
+  const productsRef = database.ref('products');
+  // تحويل المصفوفة إلى كائن
+  const productsObject = {};
+  products.forEach((product, index) => {
+    productsObject[index] = product;
+  });
+  productsRef.set(productsObject);
+}
+
+// الاستماع للتغييرات في Firebase (تحديث فوري)
+function listenToProductChanges() {
+  const productsRef = database.ref('products');
+  productsRef.on('value', (snapshot) => {
+    const products = snapshot.val();
+    if (products) {
+      const productsArray = Object.values(products);
+      const oldProducts = JSON.parse(localStorage.getItem("products")) || [];
+      
+      // حفظ في localStorage
+      localStorage.setItem("products", JSON.stringify(productsArray));
+      
+      // تحديث الواجهة إذا كانت مختلفة
+      if (JSON.stringify(oldProducts) !== JSON.stringify(productsArray)) {
+        refreshUserProducts();
+        updateCartAfterProductChange();
+        showNotification("🔄 تم تحديث قائمة المنتجات من الخادم", "info", 3000);
+      }
+    }
+  });
+}
+
+// دالة للحصول على المنتجات (متزامنة للاستخدام العادي)
+function getProducts() {
+  return JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+}
+
+// دالة غير متزامنة للحصول على المنتجات
+async function getProductsAsync() {
+  let products = JSON.parse(localStorage.getItem("products"));
+  if (!products) {
+    products = await loadProductsFromFirebase();
+  }
+  return products || getDefaultProducts();
+}
+
+// دالة لمزامنة التغييرات مع Firebase
+async function syncProductsToFirebase() {
+  const products = getProducts();
+  const productsObject = {};
+  products.forEach((product, index) => {
+    productsObject[index] = product;
+  });
+  await database.ref('products').set(productsObject);
+}
 const currency = "₺";
 
 // رقم واتساب المحدث
