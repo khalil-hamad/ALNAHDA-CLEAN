@@ -13,11 +13,38 @@ let ordersHistory = [];
 let ordersCount = parseInt(localStorage.getItem("ordersCount")) || 0;
 
 // كلمة مرور المدير
-const ADMIN_PASSWORD = "admin123";
+const ADMIN_PASSWORD = "996225386048";
+
+// =============== إعدادات Firebase ===============
+const firebaseConfig = {
+  apiKey: "AIzaSyD7WmJ_RsJ4rWZk3V_b2I7-Y9eHdGwNz6g",
+  authDomain: "lamsat-c.firebaseapp.com",
+  projectId: "lamsat-c",
+  storageBucket: "lamsat-c.firebasestorage.app",
+  messagingSenderId: "252887125400",
+  appId: "1:252887125400:web:d5c662eee9f6def88eafed",
+  measurementId: "G-MV0HPM46PB"
+};
+
+// تهيئة Firebase
+let database;
+try {
+  firebase.initializeApp(firebaseConfig);
+  database = firebase.database();
+  console.log("✅ Firebase initialized successfully");
+} catch (error) {
+  console.log("⚠️ Firebase already initialized or error:", error);
+  database = firebase.database();
+}
 
 // =============== الحصول على المنتجات ===============
 function getProducts() {
-  return JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+  let products = JSON.parse(localStorage.getItem("products"));
+  if (!products || products.length === 0) {
+    products = getDefaultProducts();
+    localStorage.setItem("products", JSON.stringify(products));
+  }
+  return products;
 }
 
 function getDefaultProducts() {
@@ -35,6 +62,72 @@ function getDefaultProducts() {
   ];
 }
 
+// =============== مزامنة Firebase ===============
+async function loadProductsFromFirebase() {
+  try {
+    const snapshot = await database.ref('products').once('value');
+    const products = snapshot.val();
+    if (products) {
+      const productsArray = Object.values(products);
+      localStorage.setItem("products", JSON.stringify(productsArray));
+      console.log("✅ Products loaded from Firebase");
+      return productsArray;
+    } else {
+      console.log("⚠️ No products in Firebase, using default");
+      const defaultProducts = getDefaultProducts();
+      localStorage.setItem("products", JSON.stringify(defaultProducts));
+      await database.ref('products').set(defaultProducts);
+      return defaultProducts;
+    }
+  } catch (error) {
+    console.error("❌ Error loading from Firebase:", error);
+    const localProducts = getProducts();
+    return localProducts;
+  }
+}
+
+function listenToProductChanges() {
+  if (!database) return;
+  database.ref('products').on('value', (snapshot) => {
+    const products = snapshot.val();
+    if (products) {
+      const productsArray = Object.values(products);
+      const oldProducts = JSON.parse(localStorage.getItem("products")) || [];
+      localStorage.setItem("products", JSON.stringify(productsArray));
+      if (JSON.stringify(oldProducts) !== JSON.stringify(productsArray)) {
+        refreshUserProducts();
+        updateCartAfterProductChange();
+        showNotification("🔄 تم تحديث قائمة المنتجات", "info", 3000);
+      }
+    }
+  });
+}
+
+function refreshUserProducts() {
+  if (document.getElementById("mainSite").style.display === "block") {
+    displayProducts();
+    collectProductImages();
+  }
+}
+
+function updateCartAfterProductChange() {
+  const products = getProducts();
+  let cartChanged = false;
+  
+  for (let i = cart.length - 1; i >= 0; i--) {
+    const productExists = products.find(p => p.name === cart[i].name);
+    if (!productExists || productExists.available === false) {
+      cart.splice(i, 1);
+      cartChanged = true;
+    }
+  }
+  
+  if (cartChanged) {
+    saveUserData();
+    renderCart();
+  }
+}
+
 // =============== التحقق من المدير ===============
 function openAdminPanel() {
   const password = prompt("🔐 أدخل كلمة مرور المدير:");
@@ -46,11 +139,10 @@ function openAdminPanel() {
 }
 
 // =============== التهيئة ===============
-document.addEventListener('DOMContentLoaded', function() {
-  // تهيئة المنتجات إذا لم تكن موجودة
-  if (!localStorage.getItem("products")) {
-    localStorage.setItem("products", JSON.stringify(getDefaultProducts()));
-  }
+document.addEventListener('DOMContentLoaded', async function() {
+  // تحميل المنتجات من Firebase
+  await loadProductsFromFirebase();
+  listenToProductChanges();
   
   if (currentUser && usersData[currentUser]) {
     showMainSite();
@@ -61,21 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
   updateOrdersCounter();
 });
 
-// =============== عداد الطلبات ===============
-function updateOrdersCounter() {
-  const counterElement = document.getElementById('ordersCount');
-  if (counterElement) {
-    counterElement.innerText = ordersCount.toString().padStart(2, '0');
-  }
-}
-
-function incrementOrdersCounter() {
-  ordersCount++;
-  localStorage.setItem("ordersCount", ordersCount);
-  updateOrdersCounter();
-}
-
-// =============== نظام تسجيل الدخول ===============
 function showLoginScreen() {
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("mainSite").style.display = "none";
@@ -85,14 +162,10 @@ function showMainSite() {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("mainSite").style.display = "block";
   
-  // عرض عنوان المستخدم
   if (currentUser && usersData[currentUser] && usersData[currentUser].profile) {
     let profile = usersData[currentUser].profile;
     document.getElementById("userAddress").innerText = `${profile.district}`;
   }
-  
-  // إظهار زر المدير (اختياري)
-   document.getElementById("adminBtn").style.display = "flex";
   
   loadUserData();
   displayProducts();
@@ -117,11 +190,7 @@ function loadUserData() {
 function saveUserData() {
   if (currentUser) {
     if (!usersData[currentUser]) {
-      usersData[currentUser] = {
-        profile: {},
-        orders: [],
-        cart: []
-      };
+      usersData[currentUser] = { profile: {}, orders: [], cart: [] };
     }
     usersData[currentUser].cart = cart;
     usersData[currentUser].orders = ordersHistory;
@@ -133,12 +202,6 @@ function saveClientData() {
   let district = document.getElementById("district").value;
   let street = document.getElementById("street").value.trim();
   let home = document.getElementById("home").value.trim();
-  let building = document.getElementById("building").value;
-
-  // إذا تم اختيار بناية، نستخدمها بدلاً من الحارة
-  if (building && building !== "") {
-    street = `بناية ${building}`;
-  }
 
   if (!district || !street || !home) {
     showNotification("❌ يرجى إدخال جميع البيانات", "error");
@@ -149,13 +212,13 @@ function saveClientData() {
   
   if (!usersData[userId]) {
     usersData[userId] = {
-      profile: { district, street, home, building: building || null },
+      profile: { district, street, home },
       orders: [],
       cart: [],
       joinDate: new Date().toLocaleDateString("ar-EG")
     };
   } else {
-    usersData[userId].profile = { district, street, home, building: building || null };
+    usersData[userId].profile = { district, street, home };
   }
   
   currentUser = userId;
@@ -199,9 +262,7 @@ function showNotification(message, type = 'info', duration = 5000) {
   notification.innerHTML = `
     <i class="fas ${icons[type] || 'fa-info-circle'}"></i>
     <div class="notification-content">
-      <div class="notification-title">${type === 'success' ? 'تم بنجاح' : 
-                                       type === 'error' ? 'خطأ' : 
-                                       type === 'warning' ? 'تنبيه' : 'تنبيه'}</div>
+      <div class="notification-title">${type === 'success' ? 'تم بنجاح' : type === 'error' ? 'خطأ' : 'تنبيه'}</div>
       <div class="notification-message">${message}</div>
     </div>
     <button class="notification-close" onclick="this.parentElement.remove()">
@@ -217,7 +278,7 @@ function showNotification(message, type = 'info', duration = 5000) {
 }
 
 // =============== عرض المنتجات ===============
-function displayProducts() {
+async function displayProducts() {
   const container = document.getElementById("products");
   if (!container) return;
   
@@ -404,7 +465,6 @@ function clearCart() {
 function toggleCart() {
   let cartElement = document.getElementById("cart");
   let ordersElement = document.getElementById("orders");
-  
   cartElement.classList.toggle("active");
   ordersElement.classList.remove("active");
 }
@@ -413,7 +473,6 @@ function toggleCart() {
 function toggleOrders() {
   let ordersElement = document.getElementById("orders");
   let cartElement = document.getElementById("cart");
-  
   ordersElement.classList.toggle("active");
   cartElement.classList.remove("active");
   renderOrders();
@@ -422,7 +481,6 @@ function toggleOrders() {
 function renderOrders() {
   let box = document.getElementById("ordersList");
   if (!box) return;
-  
   box.innerHTML = "";
   
   if (!ordersHistory || ordersHistory.length === 0) {
@@ -430,27 +488,17 @@ function renderOrders() {
     return;
   }
   
-  // زر مسح الكل
-  box.innerHTML += `
-    <button class="clear-orders-btn" onclick="clearAllOrders()">
-      <i class="fas fa-trash"></i> مسح جميع الطلبات (${ordersHistory.length})
-    </button>
-  `;
+  box.innerHTML += `<button class="clear-orders-btn" onclick="clearAllOrders()"><i class="fas fa-trash"></i> مسح جميع الطلبات (${ordersHistory.length})</button>`;
   
   ordersHistory.slice(0, 20).forEach((order, index) => {
     box.innerHTML += `
       <div class="order-item">
         <div style="display:flex; justify-content:space-between; align-items:start;">
           <b>📍 ${order.address || 'عنوان غير محدد'}</b>
-          <button onclick="deleteOrder(${index})" style="background:none; border:none; color:#ef476f; font-size:18px; width:auto; padding:5px;">
-            <i class="fas fa-times"></i>
-          </button>
+          <button onclick="deleteOrder(${index})" style="background:none; border:none; color:#ef476f; font-size:18px; width:auto; padding:5px;"><i class="fas fa-times"></i></button>
         </div>
         <small>🕒 ${order.date}</small>
-        <div style="background:#f0f0f0; padding:8px; border-radius:8px; margin:8px 0; font-size:12px;">
-          ${order.items.slice(0, 3).join("<br>")}
-          ${order.items.length > 3 ? `<br>... و${order.items.length - 3} أخرى` : ''}
-        </div>
+        <div style="background:#f0f0f0; padding:8px; border-radius:8px; margin:8px 0; font-size:12px;">${order.items.slice(0, 3).join("<br>")}${order.items.length > 3 ? `<br>... و${order.items.length - 3} أخرى` : ''}</div>
         <b>💰 ${order.total} ${currency}</b>
       </div>`;
   });
@@ -458,7 +506,6 @@ function renderOrders() {
 
 function deleteOrder(index) {
   if (!confirm("هل تريد حذف هذا الطلب؟")) return;
-  
   ordersHistory.splice(index, 1);
   saveUserData();
   renderOrders();
@@ -466,127 +513,76 @@ function deleteOrder(index) {
 }
 
 function clearAllOrders() {
-  if (!ordersHistory || ordersHistory.length === 0) {
-    showNotification("لا توجد طلبات", "info");
-    return;
-  }
-  
+  if (!ordersHistory || ordersHistory.length === 0) return;
   if (!confirm("⚠️ هل أنت متأكد من مسح جميع الطلبات؟")) return;
-  
   ordersHistory = [];
   saveUserData();
   renderOrders();
   showNotification("🗑️ تم مسح جميع الطلبات", "info");
 }
 
-// =============== واتساب للطلبات ===============
+function updateOrdersCounter() {
+  const counterElement = document.getElementById('ordersCount');
+  if (counterElement) counterElement.innerText = ordersCount.toString().padStart(2, '0');
+}
+
+function incrementOrdersCounter() {
+  ordersCount++;
+  localStorage.setItem("ordersCount", ordersCount);
+  updateOrdersCounter();
+}
+
+// =============== واتساب ===============
 function sendWhatsApp() {
   if (cart.length === 0) {
     showNotification("❌ السلة فارغة", "error");
     return;
   }
-
   let now = new Date();
   let date = now.toLocaleString("ar-EG");
   let user = usersData[currentUser]?.profile;
-
   if (!user) {
     showNotification("❌ بيانات العنوان غير موجودة", "error");
     return;
   }
-
   let address = `${user.district} - حارة ${user.street} - بيت ${user.home}`;
   let total = cart.reduce((s, i) => s + parseFloat(i.total), 0).toFixed(2);
-
-  let order = {
-    address: address,
-    date: date,
-    items: cart.map(i => `• ${i.name} - ${i.kg} ${i.unit === "علبة" ? "علبة" : "كغ"} - ${i.total} ${currency}`),
-    total: total
-  };
-
-  // حفظ الطلب في سجل العميل
+  let order = { address, date, items: cart.map(i => `• ${i.name} - ${i.kg} ${i.unit === "علبة" ? "علبة" : "كغ"} - ${i.total} ${currency}`), total };
   ordersHistory.unshift(order);
   saveUserData();
-
-  // زيادة عداد الطلبات
   incrementOrdersCounter();
-
-  // رسالة واتساب
-  let msg = `🛍️ *طلب جديد*\n\n`;
-  msg += `📍 *العنوان:* ${address}\n`;
-  msg += `──────────────\n`;
-  msg += `*🛒 الطلب:*\n`;
-  order.items.forEach(i => msg += i + "\n");
-  msg += `──────────────\n`;
-  msg += `💰 *الإجمالي:* ${total} ${currency}\n`;
-  msg += `🕒 *التاريخ:* ${date}\n`;
-  msg += `──────────────\n`;
-  msg += `✅ شكراً لتسوقك من معمل النهضة`;
-
-  // فتح واتساب
+  let msg = `🛍️ *طلب جديد*\n\n📍 *العنوان:* ${address}\n──────────────\n*🛒 الطلب:*\n${order.items.join("\n")}\n──────────────\n💰 *الإجمالي:* ${total} ${currency}\n🕒 *التاريخ:* ${date}\n──────────────\n✅ شكراً لتسوقك من معمل النهضة`;
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(msg), '_blank');
-
-  // مسح السلة بعد إرسال الطلب
   cart = [];
   saveUserData();
   renderCart();
-  
   showNotification("📤 تم إرسال الطلب", "success");
 }
 
-// =============== واتساب للملاحظات ===============
 function sendNoteToWhatsApp() {
   let note = document.getElementById("userNote").value.trim();
   let noteType = document.getElementById("noteType").value;
-  
   if (!note) {
     showNotification("❌ اكتب ملاحظاتك أولاً", "error");
     return;
   }
-
   let user = usersData[currentUser]?.profile;
   let date = new Date().toLocaleString("ar-EG");
-  
-  const typeNames = {
-    suggestion: '💡 اقتراح',
-    complaint: '⚠️ شكوى',
-    inquiry: '❓ استفسار',
-    praise: '🌟 إشادة'
-  };
-
-  let msg = `📝 *${typeNames[noteType]} من عميل*\n\n`;
-  if (user) {
-    msg += `📍 *العنوان:* ${user.district} - ${user.street} - ${user.home}\n`;
-  }
-  msg += `🕒 *التاريخ:* ${date}\n`;
-  msg += `──────────────\n`;
-  msg += `*💬 الملاحظة:*\n`;
-  msg += `${note}\n`;
-  msg += `──────────────\n`;
-  msg += `✅ شكراً لتواصلك معنا`;
-
+  const typeNames = { suggestion: '💡 اقتراح', complaint: '⚠️ شكوى', inquiry: '❓ استفسار', praise: '🌟 إشادة' };
+  let msg = `📝 *${typeNames[noteType]} من عميل*\n\n${user ? `📍 *العنوان:* ${user.district} - ${user.street} - ${user.home}\n` : ''}🕒 *التاريخ:* ${date}\n──────────────\n*💬 الملاحظة:*\n${note}\n──────────────\n✅ شكراً لتواصلك معنا`;
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(msg), '_blank');
-  
-  // تفريغ حقل الملاحظات بعد الإرسال
   document.getElementById("userNote").value = "";
   showNotification("📤 تم إرسال ملاحظاتك", "success");
 }
 
-// =============== نظام معاينة الصور ===============
+// =============== معاينة الصور ===============
 let currentImageIndex = 0;
 let productImages = [];
 
 function collectProductImages() {
   productImages = [];
   const products = getProducts();
-  products.forEach((product, index) => {
-    productImages.push({
-      src: product.img,
-      alt: product.name,
-      index: index
-    });
-  });
+  products.forEach((product, index) => { productImages.push({ src: product.img, alt: product.name, index: index }); });
 }
 
 function openImageModalByIndex(index) {
@@ -595,12 +591,7 @@ function openImageModalByIndex(index) {
   const modal = document.getElementById('imageModal');
   const modalImg = document.getElementById('modalImage');
   const caption = document.getElementById('modalCaption');
-  
-  if (productImages[index]) {
-    modalImg.src = productImages[index].src;
-    caption.innerHTML = productImages[index].alt;
-  }
-  
+  if (productImages[index]) { modalImg.src = productImages[index].src; caption.innerHTML = productImages[index].alt; }
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
@@ -613,20 +604,11 @@ function closeImageModal() {
 
 function navigateImage(direction) {
   currentImageIndex += direction;
-  
-  if (currentImageIndex < 0) {
-    currentImageIndex = productImages.length - 1;
-  } else if (currentImageIndex >= productImages.length) {
-    currentImageIndex = 0;
-  }
-  
+  if (currentImageIndex < 0) currentImageIndex = productImages.length - 1;
+  if (currentImageIndex >= productImages.length) currentImageIndex = 0;
   const modalImg = document.getElementById('modalImage');
   const caption = document.getElementById('modalCaption');
-  
-  if (productImages[currentImageIndex]) {
-    modalImg.src = productImages[currentImageIndex].src;
-    caption.innerHTML = productImages[currentImageIndex].alt;
-  }
+  if (productImages[currentImageIndex]) { modalImg.src = productImages[currentImageIndex].src; caption.innerHTML = productImages[currentImageIndex].alt; }
 }
 
 function downloadCurrentImage() {
@@ -640,163 +622,48 @@ function downloadCurrentImage() {
   showNotification('✅ جاري تحميل الصورة', 'success');
 }
 
-// إضافة أزرار التنقل
 function addNavigationButtons() {
   const modal = document.getElementById('imageModal');
-  
+  if (document.querySelector('.nav-btn')) return;
   const prevBtn = document.createElement('button');
   prevBtn.className = 'nav-btn prev-btn';
   prevBtn.innerHTML = '❮';
-  prevBtn.onclick = (e) => {
-    e.stopPropagation();
-    navigateImage(-1);
-  };
-  
+  prevBtn.onclick = (e) => { e.stopPropagation(); navigateImage(-1); };
   const nextBtn = document.createElement('button');
   nextBtn.className = 'nav-btn next-btn';
   nextBtn.innerHTML = '❯';
-  nextBtn.onclick = (e) => {
-    e.stopPropagation();
-    navigateImage(1);
-  };
-  
+  nextBtn.onclick = (e) => { e.stopPropagation(); navigateImage(1); };
   const downloadBtn = document.createElement('button');
   downloadBtn.className = 'download-image';
   downloadBtn.innerHTML = '<i class="fas fa-download"></i> تحميل الصورة';
-  downloadBtn.onclick = (e) => {
-    e.stopPropagation();
-    downloadCurrentImage();
-  };
-  
+  downloadBtn.onclick = (e) => { e.stopPropagation(); downloadCurrentImage(); };
   modal.appendChild(prevBtn);
   modal.appendChild(nextBtn);
   modal.appendChild(downloadBtn);
 }
 
-// إضافة دعم لوحة المفاتيح
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('imageModal');
   if (!modal.classList.contains('active')) return;
-  
-  if (e.key === 'Escape') {
-    closeImageModal();
-  } else if (e.key === 'ArrowLeft') {
-    navigateImage(-1);
-  } else if (e.key === 'ArrowRight') {
-    navigateImage(1);
-  }
+  if (e.key === 'Escape') closeImageModal();
+  else if (e.key === 'ArrowLeft') navigateImage(-1);
+  else if (e.key === 'ArrowRight') navigateImage(1);
 });
 
-// تهيئة معاينة الصور
-setTimeout(() => {
-  collectProductImages();
-  addNavigationButtons();
-}, 1000);
+setTimeout(() => { collectProductImages(); addNavigationButtons(); }, 1000);
 
 function toggleBuildingInput() {
   const district = document.getElementById("district").value;
   const buildingSelect = document.getElementById("building");
-  const streetInput = document.getElementById("street");
-  const homeInput = document.getElementById("home");
-  
-  // فقط حي النهضة يظهر له خانة البناية
-  if (district === "النهضة") {
-    buildingSelect.style.display = "block";
-    
-    // إضافة مستمع لحدث تغيير البناية
-    buildingSelect.onchange = function() {
-      if (buildingSelect.value !== "") {
-        // عند اختيار بناية، يتم إخفاء حقل الحارة
-        streetInput.style.display = "none";
-        streetInput.value = ""; // تفريغ القيمة
-        homeInput.placeholder = "رقم البيت (داخل البناية)";
-      } else {
-        // عند إلغاء اختيار البناية، يظهر حقل الحارة
-        streetInput.style.display = "block";
-        streetInput.placeholder = "رقم الحارة";
-        homeInput.placeholder = "رقم البيت";
-      }
-    };
-    
-  } else {
-    buildingSelect.style.display = "none";
-    buildingSelect.value = ""; // تفريغ القيمة
-    streetInput.style.display = "block";
-    streetInput.placeholder = "رقم الحارة";
-    homeInput.placeholder = "رقم البيت";
-  }
+  if (district === "النهضة") buildingSelect.style.display = "block";
+  else buildingSelect.style.display = "none";
 }
-// دالة لإظهار الرسالة المنبثقة
+
 function showToast(message, type = "info") {
   let toast = document.getElementById("toast");
   if (!toast) return;
-  
   toast.innerText = message;
   toast.style.opacity = "1";
   toast.style.bottom = "100px";
-  
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.bottom = "80px";
-  }, 2000);
+  setTimeout(() => { toast.style.opacity = "0"; toast.style.bottom = "80px"; }, 2000);
 }
-// تهيئة الحقول عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', function() {
-  const buildingSelect = document.getElementById("building");
-  const streetInput = document.getElementById("street");
-  const homeInput = document.getElementById("home");
-  const districtSelect = document.getElementById("district");
-  
-  // إضافة حدث لمراقبة تغيير البناية
-  if (buildingSelect) {
-    buildingSelect.addEventListener('change', function() {
-      if (this.value !== "") {
-        streetInput.style.display = "none";
-        streetInput.value = "";
-        homeInput.placeholder = "رقم البيت (داخل البناية)";
-      } else {
-        streetInput.style.display = "block";
-        streetInput.placeholder = "رقم الحارة";
-        homeInput.placeholder = "رقم البيت";
-      }
-    });
-  }
-  
-  // إضافة حدث لمراقبة تغيير الحي
-  if (districtSelect) {
-    districtSelect.addEventListener('change', function() {
-      if (this.value === "النهضة") {
-        buildingSelect.style.display = "block";
-      } else {
-        buildingSelect.style.display = "none";
-        buildingSelect.value = "";
-        streetInput.style.display = "block";
-        streetInput.placeholder = "رقم الحارة";
-        homeInput.placeholder = "رقم البيت";
-      }
-    });
-  }
-});
-// =============== دوال التعديل في script.js ===============
-
-// تحديث عرض المنتجات بعد التعديل من المدير
-function refreshProductsDisplay() {
-  displayProducts();
-  collectProductImages();
-}
-
-// دالة لإعادة تحميل المنتجات عند العودة من المدير
-window.addEventListener('storage', function(e) {
-  if (e.key === 'products') {
-    refreshProductsDisplay();
-  }
-});
-// =============== دعم الصور Base64 ===============
-
-// دالة للتحقق إذا كانت الصورة Base64
-function isBase64Image(str) {
-  return str && str.startsWith('data:image');
-}
-
-// دالة لتحديث عرض المنتجات مع دعم Base64
-// (لا تحتاج تعديل لأن displayProducts تدعم الرابط مباشرة)
