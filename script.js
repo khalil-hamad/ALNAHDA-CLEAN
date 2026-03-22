@@ -15,28 +15,6 @@ let ordersCount = parseInt(localStorage.getItem("ordersCount")) || 0;
 // كلمة مرور المدير
 const ADMIN_PASSWORD = "996225386048";
 
-// =============== إعدادات Firebase ===============
-const firebaseConfig = {
-  apiKey: "AIzaSyD7WmJ_RsJ4rWZk3V_b2I7-Y9eHdGwNz6g",
-  authDomain: "lamsat-c.firebaseapp.com",
-  projectId: "lamsat-c",
-  storageBucket: "lamsat-c.firebasestorage.app",
-  messagingSenderId: "252887125400",
-  appId: "1:252887125400:web:d5c662eee9f6def88eafed",
-  measurementId: "G-MV0HPM46PB"
-};
-
-// تهيئة Firebase
-let database;
-try {
-  firebase.initializeApp(firebaseConfig);
-  database = firebase.database();
-  console.log("✅ Firebase initialized successfully");
-} catch (error) {
-  console.log("⚠️ Firebase already initialized or error:", error);
-  database = firebase.database();
-}
-
 // =============== الحصول على المنتجات ===============
 function getProducts() {
   let products = JSON.parse(localStorage.getItem("products"));
@@ -62,72 +40,6 @@ function getDefaultProducts() {
   ];
 }
 
-// =============== مزامنة Firebase ===============
-async function loadProductsFromFirebase() {
-  try {
-    const snapshot = await database.ref('products').once('value');
-    const products = snapshot.val();
-    if (products) {
-      const productsArray = Object.values(products);
-      localStorage.setItem("products", JSON.stringify(productsArray));
-      console.log("✅ Products loaded from Firebase");
-      return productsArray;
-    } else {
-      console.log("⚠️ No products in Firebase, using default");
-      const defaultProducts = getDefaultProducts();
-      localStorage.setItem("products", JSON.stringify(defaultProducts));
-      await database.ref('products').set(defaultProducts);
-      return defaultProducts;
-    }
-  } catch (error) {
-    console.error("❌ Error loading from Firebase:", error);
-    const localProducts = getProducts();
-    return localProducts;
-  }
-}
-
-function listenToProductChanges() {
-  if (!database) return;
-  database.ref('products').on('value', (snapshot) => {
-    const products = snapshot.val();
-    if (products) {
-      const productsArray = Object.values(products);
-      const oldProducts = JSON.parse(localStorage.getItem("products")) || [];
-      localStorage.setItem("products", JSON.stringify(productsArray));
-      if (JSON.stringify(oldProducts) !== JSON.stringify(productsArray)) {
-        refreshUserProducts();
-        updateCartAfterProductChange();
-        showNotification("🔄 تم تحديث قائمة المنتجات", "info", 3000);
-      }
-    }
-  });
-}
-
-function refreshUserProducts() {
-  if (document.getElementById("mainSite").style.display === "block") {
-    displayProducts();
-    collectProductImages();
-  }
-}
-
-function updateCartAfterProductChange() {
-  const products = getProducts();
-  let cartChanged = false;
-  
-  for (let i = cart.length - 1; i >= 0; i--) {
-    const productExists = products.find(p => p.name === cart[i].name);
-    if (!productExists || productExists.available === false) {
-      cart.splice(i, 1);
-      cartChanged = true;
-    }
-  }
-  
-  if (cartChanged) {
-    saveUserData();
-    renderCart();
-  }
-}
-
 // =============== التحقق من المدير ===============
 function openAdminPanel() {
   const password = prompt("🔐 أدخل كلمة مرور المدير:");
@@ -139,10 +51,11 @@ function openAdminPanel() {
 }
 
 // =============== التهيئة ===============
-document.addEventListener('DOMContentLoaded', async function() {
-  // تحميل المنتجات من Firebase
-  await loadProductsFromFirebase();
-  listenToProductChanges();
+document.addEventListener('DOMContentLoaded', function() {
+  // تهيئة المنتجات إذا لم تكن موجودة
+  if (!localStorage.getItem("products")) {
+    localStorage.setItem("products", JSON.stringify(getDefaultProducts()));
+  }
   
   if (currentUser && usersData[currentUser]) {
     showMainSite();
@@ -154,17 +67,27 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function showLoginScreen() {
-  document.getElementById("loginScreen").style.display = "flex";
-  document.getElementById("mainSite").style.display = "none";
+  const loginScreen = document.getElementById("loginScreen");
+  const mainSite = document.getElementById("mainSite");
+  if (loginScreen) loginScreen.style.display = "flex";
+  if (mainSite) mainSite.style.display = "none";
 }
 
 function showMainSite() {
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("mainSite").style.display = "block";
+  const loginScreen = document.getElementById("loginScreen");
+  const mainSite = document.getElementById("mainSite");
+  if (loginScreen) loginScreen.style.display = "none";
+  if (mainSite) mainSite.style.display = "block";
   
+  // إظهار زر المدير
+  const adminBtn = document.getElementById("adminBtn");
+  if (adminBtn) adminBtn.style.display = "flex";
+  
+  // عرض عنوان المستخدم
   if (currentUser && usersData[currentUser] && usersData[currentUser].profile) {
     let profile = usersData[currentUser].profile;
-    document.getElementById("userAddress").innerText = `${profile.district}`;
+    const userAddress = document.getElementById("userAddress");
+    if (userAddress) userAddress.innerText = `${profile.district}`;
   }
   
   loadUserData();
@@ -278,7 +201,7 @@ function showNotification(message, type = 'info', duration = 5000) {
 }
 
 // =============== عرض المنتجات ===============
-async function displayProducts() {
+function displayProducts() {
   const container = document.getElementById("products");
   if (!container) return;
   
@@ -465,16 +388,16 @@ function clearCart() {
 function toggleCart() {
   let cartElement = document.getElementById("cart");
   let ordersElement = document.getElementById("orders");
-  cartElement.classList.toggle("active");
-  ordersElement.classList.remove("active");
+  if (cartElement) cartElement.classList.toggle("active");
+  if (ordersElement) ordersElement.classList.remove("active");
 }
 
 // =============== إدارة الطلبات ===============
 function toggleOrders() {
   let ordersElement = document.getElementById("orders");
   let cartElement = document.getElementById("cart");
-  ordersElement.classList.toggle("active");
-  cartElement.classList.remove("active");
+  if (ordersElement) ordersElement.classList.toggle("active");
+  if (cartElement) cartElement.classList.remove("active");
   renderOrders();
 }
 
@@ -592,13 +515,13 @@ function openImageModalByIndex(index) {
   const modalImg = document.getElementById('modalImage');
   const caption = document.getElementById('modalCaption');
   if (productImages[index]) { modalImg.src = productImages[index].src; caption.innerHTML = productImages[index].alt; }
-  modal.classList.add('active');
+  if (modal) modal.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
 
 function closeImageModal() {
   const modal = document.getElementById('imageModal');
-  modal.classList.remove('active');
+  if (modal) modal.classList.remove('active');
   document.body.style.overflow = 'auto';
 }
 
@@ -624,6 +547,7 @@ function downloadCurrentImage() {
 
 function addNavigationButtons() {
   const modal = document.getElementById('imageModal');
+  if (!modal) return;
   if (document.querySelector('.nav-btn')) return;
   const prevBtn = document.createElement('button');
   prevBtn.className = 'nav-btn prev-btn';
@@ -644,7 +568,7 @@ function addNavigationButtons() {
 
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('imageModal');
-  if (!modal.classList.contains('active')) return;
+  if (!modal || !modal.classList.contains('active')) return;
   if (e.key === 'Escape') closeImageModal();
   else if (e.key === 'ArrowLeft') navigateImage(-1);
   else if (e.key === 'ArrowRight') navigateImage(1);
@@ -653,10 +577,12 @@ document.addEventListener('keydown', function(e) {
 setTimeout(() => { collectProductImages(); addNavigationButtons(); }, 1000);
 
 function toggleBuildingInput() {
-  const district = document.getElementById("district").value;
+  const district = document.getElementById("district");
   const buildingSelect = document.getElementById("building");
-  if (district === "النهضة") buildingSelect.style.display = "block";
-  else buildingSelect.style.display = "none";
+  if (district && buildingSelect) {
+    if (district.value === "النهضة") buildingSelect.style.display = "block";
+    else buildingSelect.style.display = "none";
+  }
 }
 
 function showToast(message, type = "info") {
