@@ -796,6 +796,71 @@ window.addEventListener('storage', function(e) {
 // دالة للتحقق إذا كانت الصورة Base64
 function isBase64Image(str) {
   return str && str.startsWith('data:image');
+  // تهيئة معاينة الصور
+setTimeout(() => {
+  collectProductImages();
+  addNavigationButtons();
+}, 1000);
+
+// دالة لإظهار الرسالة المنبثقة
+function showToast(message, type = "info") {
+  let toast = document.getElementById("toast");
+  if (!toast) return;
+  
+  toast.innerText = message;
+  toast.style.opacity = "1";
+  toast.style.bottom = "100px";
+  
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.bottom = "80px";
+  }, 2000);
+}
+
+// =============== تحديث المنتجات للمستخدمين مباشرة ===============
+
+// دالة لتحديث عرض المنتجات للمستخدم الحالي
+function refreshUserProducts() {
+  if (document.getElementById("mainSite").style.display === "block") {
+    displayProducts();
+    collectProductImages();
+    showNotification("🔄 تم تحديث قائمة المنتجات", "info", 2000);
+  }
+}
+
+// الاستماع للتغييرات في localStorage (عند تعديل المنتجات من المدير)
+window.addEventListener('storage', function(e) {
+  if (e.key === 'products') {
+    refreshUserProducts();
+    updateCartAfterProductChange();
+  }
+});
+
+// دالة لتحديث السلة بعد تغيير المنتجات
+function updateCartAfterProductChange() {
+  const products = JSON.parse(localStorage.getItem("products")) || [];
+  let cartChanged = false;
+  
+  for (let i = cart.length - 1; i >= 0; i--) {
+    const cartItem = cart[i];
+    const productExists = products.find(p => p.name === cartItem.name);
+    if (!productExists || productExists.available === false) {
+      cart.splice(i, 1);
+      cartChanged = true;
+      if (productExists && productExists.available === false) {
+        showNotification(`⚠️ تم إزالة "${cartItem.name}" من السلة لأنه غير متوفر حالياً`, "warning");
+      }
+    }
+  }
+  
+  if (cartChanged) {
+    saveUserData();
+    renderCart();
+  }
+}
+
+// حفظ المنتجات القديمة عند التحميل
+window._oldProducts = JSON.parse(JSON.stringify(JSON.parse(localStorage.getItem("products")) || []));
 }
 
 // دالة لتحديث عرض المنتجات مع دعم Base64
