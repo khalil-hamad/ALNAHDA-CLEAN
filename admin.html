@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>لوحة المدير - معمل لمسات</title>
@@ -305,6 +305,60 @@
 </div>
 
 <script>
+  // =============== إعدادات Firebase ===============
+  const firebaseConfig = {
+    apiKey: "AIzaSyD7WmJ_RsJ4rWZk3V_b2I7-Y9eHdGwNz6g",
+    authDomain: "lamsat-c.firebaseapp.com",
+    projectId: "lamsat-c",
+    storageBucket: "lamsat-c.firebasestorage.app",
+    messagingSenderId: "252887125400",
+    appId: "1:252887125400:web:d5c662eee9f6def88eafed",
+    measurementId: "G-MV0HPM46PB"
+  };
+
+  // تهيئة Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // دالة لمزامنة المنتجات مع Firebase
+  async function syncToFirebase() {
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    const productsObject = {};
+    products.forEach((product, index) => {
+      productsObject[index] = product;
+    });
+    try {
+      await database.ref('products').set(productsObject);
+      showToast("✅ تم المزامنة مع الخادم");
+    } catch (error) {
+      console.error("خطأ في المزامنة:", error);
+      showToast("⚠️ فشل المزامنة مع الخادم");
+    }
+  }
+
+  // دالة showToast للتنبيهات
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2b3a4a;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      z-index: 10001;
+      font-size: 14px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    `;
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, 2000);
+  }
+
   const ADMIN_PASSWORD = "996225386048";
   
   function checkAdminPassword() {
@@ -436,7 +490,6 @@
   function setupEditImageUpload(index) {
     const fileInput = document.getElementById(`editImageFile${index}`);
     if (fileInput) {
-      // إزالة المستمع القديم إذا وجد
       const newFileInput = fileInput.cloneNode(true);
       fileInput.parentNode.replaceChild(newFileInput, fileInput);
       
@@ -467,61 +520,61 @@
     form.classList.toggle('active');
   }
   
-  function toggleAvailability(index) {
+  async function toggleAvailability(index) {
     const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
     products[index].available = products[index].available === false ? true : false;
     localStorage.setItem("products", JSON.stringify(products));
+    await syncToFirebase();
     loadAdminProducts();
     showToast(products[index].available ? "✅ تم تفعيل المنتج" : "⛔ تم تعطيل المنتج");
   }
   
-function updateProduct(index) {
-  const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
-  
-  const newName = document.getElementById(`editName${index}`).value.trim();
-  const newPrice = parseFloat(document.getElementById(`editPrice${index}`).value);
-  const newBoxPrice = parseFloat(document.getElementById(`editBoxPrice${index}`).value) || null;
-  const newCategory = document.getElementById(`editCategory${index}`).value;
-  let newImage = document.getElementById(`editImage${index}`).value.trim();
-  
-  if (!newName || !newPrice || newPrice <= 0) {
-    alert("❌ يرجى إدخال اسم المنتج وسعر صحيح");
-    return;
+  async function updateProduct(index) {
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    
+    const newName = document.getElementById(`editName${index}`).value.trim();
+    const newPrice = parseFloat(document.getElementById(`editPrice${index}`).value);
+    const newBoxPrice = parseFloat(document.getElementById(`editBoxPrice${index}`).value) || null;
+    const newCategory = document.getElementById(`editCategory${index}`).value;
+    let newImage = document.getElementById(`editImage${index}`).value.trim();
+    
+    if (!newName || !newPrice || newPrice <= 0) {
+      alert("❌ يرجى إدخال اسم المنتج وسعر صحيح");
+      return;
+    }
+    
+    if (!newImage) {
+      newImage = "https://via.placeholder.com/300x200?text=" + encodeURIComponent(newName);
+    }
+    
+    products[index] = {
+      ...products[index],
+      name: newName,
+      price: newPrice,
+      boxPrice: newBoxPrice,
+      category: newCategory,
+      img: newImage
+    };
+    
+    localStorage.setItem("products", JSON.stringify(products));
+    await syncToFirebase();
+    
+    loadAdminProducts();
+    showToast("✅ تم تعديل المنتج بنجاح");
   }
   
-  if (!newImage) {
-    newImage = "https://via.placeholder.com/300x200?text=" + encodeURIComponent(newName);
-  }
-  
-  products[index] = {
-    ...products[index],
-    name: newName,
-    price: newPrice,
-    boxPrice: newBoxPrice,
-    category: newCategory,
-    img: newImage
-  };
-  
-  localStorage.setItem("products", JSON.stringify(products));
-  
-  // ✅ أضف هذا السطر
-  notifyUsersOfUpdate();
-  
-  loadAdminProducts();
-  showToast("✅ تم تعديل المنتج بنجاح");
-}
-  
-  function deleteProduct(index) {
+  async function deleteProduct(index) {
     if (!confirm("⚠️ هل أنت متأكد من حذف هذا المنتج؟")) return;
     
     const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
     products.splice(index, 1);
     localStorage.setItem("products", JSON.stringify(products));
+    await syncToFirebase();
     loadAdminProducts();
     showToast("🗑️ تم حذف المنتج");
   }
   
-  function addNewProduct() {
+  async function addNewProduct() {
     const name = document.getElementById("productName").value.trim();
     const price = parseFloat(document.getElementById("productPrice").value);
     const boxPrice = parseFloat(document.getElementById("productBoxPrice").value) || null;
@@ -549,6 +602,7 @@ function updateProduct(index) {
     });
     
     localStorage.setItem("products", JSON.stringify(products));
+    await syncToFirebase();
     
     document.getElementById("productName").value = "";
     document.getElementById("productPrice").value = "";
@@ -561,32 +615,11 @@ function updateProduct(index) {
     showToast("✅ تم إضافة المنتج بنجاح");
   }
   
-  function showToast(message) {
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #2b3a4a;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 30px;
-      z-index: 10001;
-      font-size: 14px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      animation: fadeInUp 0.3s ease;
-    `;
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.remove();
-    }, 2000);
-  }
-  
   // تهيئة المنتجات
   if (!localStorage.getItem("products")) {
     localStorage.setItem("products", JSON.stringify(getDefaultProducts()));
+    // مزامنة المنتجات الافتراضية مع Firebase
+    syncToFirebase();
   }
 </script>
 </body>
