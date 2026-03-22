@@ -472,37 +472,41 @@
     showToast(products[index].available ? "✅ تم تفعيل المنتج" : "⛔ تم تعطيل المنتج");
   }
   
-  function updateProduct(index) {
-    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
-    
-    const newName = document.getElementById(`editName${index}`).value.trim();
-    const newPrice = parseFloat(document.getElementById(`editPrice${index}`).value);
-    const newBoxPrice = parseFloat(document.getElementById(`editBoxPrice${index}`).value) || null;
-    const newCategory = document.getElementById(`editCategory${index}`).value;
-    let newImage = document.getElementById(`editImage${index}`).value.trim();
-    
-    if (!newName || !newPrice || newPrice <= 0) {
-      alert("❌ يرجى إدخال اسم المنتج وسعر صحيح");
-      return;
-    }
-    
-    if (!newImage) {
-      newImage = "https://via.placeholder.com/300x200?text=" + encodeURIComponent(newName);
-    }
-    
-    products[index] = {
-      ...products[index],
-      name: newName,
-      price: newPrice,
-      boxPrice: newBoxPrice,
-      category: newCategory,
-      img: newImage
-    };
-    
-    localStorage.setItem("products", JSON.stringify(products));
-    loadAdminProducts();
-    showToast("✅ تم تعديل المنتج بنجاح");
+function updateProduct(index) {
+  const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+  
+  const newName = document.getElementById(`editName${index}`).value.trim();
+  const newPrice = parseFloat(document.getElementById(`editPrice${index}`).value);
+  const newBoxPrice = parseFloat(document.getElementById(`editBoxPrice${index}`).value) || null;
+  const newCategory = document.getElementById(`editCategory${index}`).value;
+  let newImage = document.getElementById(`editImage${index}`).value.trim();
+  
+  if (!newName || !newPrice || newPrice <= 0) {
+    alert("❌ يرجى إدخال اسم المنتج وسعر صحيح");
+    return;
   }
+  
+  if (!newImage) {
+    newImage = "https://via.placeholder.com/300x200?text=" + encodeURIComponent(newName);
+  }
+  
+  products[index] = {
+    ...products[index],
+    name: newName,
+    price: newPrice,
+    boxPrice: newBoxPrice,
+    category: newCategory,
+    img: newImage
+  };
+  
+  localStorage.setItem("products", JSON.stringify(products));
+  
+  // ✅ أضف هذا السطر
+  notifyUsersOfUpdate();
+  
+  loadAdminProducts();
+  showToast("✅ تم تعديل المنتج بنجاح");
+}
   
   function deleteProduct(index) {
     if (!confirm("⚠️ هل أنت متأكد من حذف هذا المنتج؟")) return;
