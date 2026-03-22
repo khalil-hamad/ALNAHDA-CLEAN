@@ -6,9 +6,8 @@
   <title>معمل لمسات للمنظفات</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="img/لوغو.png" style=" border-radius: 50%;">
 </head>
 <body>
 
@@ -17,16 +16,27 @@
   <div class="login-box">
     <div class="login-logo">🧴</div>
     <h2>مرحباً بك في معمل لمسات</h2>
-    <p class="login-subtitle">أدخل عنوان البيت الصحيح للمتابعة يستخدم في توصيل الطلب </p>
-    <select id="district">
+    <p class="login-subtitle">أدخل عنوان البيت الصحيح للمتابعة يستخدم في توصيل الطلب</p>
+    <select id="district" onchange="toggleBuildingInput()">
       <option value="">اختر الحي</option>
-      <option>حي النهضة</option>
-      <option>حي النخيل</option>
-      <option>حي الرحمة</option>
-      <option>حي البساتين</option>
+      <option value="النهضة">حي النهضة</option>
+      <option value="النخيل">حي النخيل</option>
+      <option value="الرحمة">حي الرحمة</option>
+      <option value="البساتين">حي البساتين</option>
     </select>
+    
+    <select id="building" style="display:none; margin:6px 0;">
+      <option value="">اختر البناية</option>
+      <option value="6">بناية 6</option>
+      <option value="7">بناية 7</option>
+      <option value="8">بناية 8</option>
+      <option value="9">بناية 9</option>
+      <option value="10">بناية 10</option>
+    </select>
+    
     <input type="text" id="street" placeholder="رقم الحارة">
     <input type="text" id="home" placeholder="رقم البيت">
+    
     <button onclick="saveClientData()" class="login-btn">
       <span>دخول</span>
       <i class="fas fa-arrow-left"></i>
@@ -73,6 +83,13 @@
         <i class="fas fa-history"></i>
         <span>طلباتي</span>
       </button>
+      
+      <!-- زر المدير -->
+      <button onclick="openAdminPanel()" class="admin-btn" id="adminBtn" style="display:none;">
+        <i class="fas fa-user-cog"></i>
+        <span>مدير</span>
+      </button>
+      
       <button class="logout-btn" onclick="logout()">
         <i class="fas fa-sign-out-alt"></i>
       </button>
@@ -87,8 +104,6 @@
       <span class="promo-icon">✨</span>
     </div>
   </div>
-
-  <!-- شريط البحث (بدون فلترة) -->
 
   <!-- المنتجات -->
   <section class="products" id="products"></section>
@@ -154,13 +169,13 @@
 
 </div>
 
+<!-- نافذة معاينة الصور -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <span class="close-modal">&times;</span>
+  <img class="modal-content" id="modalImage">
+  <div id="modalCaption" class="modal-caption"></div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>لوحة المدير - معمل لمسات</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .admin-container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    
+    .admin-card {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .admin-card h2 {
+      color: var(--primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .admin-card input, .admin-card select {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 12px;
+      border: 2px solid #eee;
+      font-size: 15px;
+    }
+    
+    .admin-card input:focus, .admin-card select:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+    
+    .admin-btn-save {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 15px;
+    }
+    
+    .admin-btn-update {
+      background: linear-gradient(135deg, var(--warning), #e6b85c);
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+    
+    .products-list {
+      margin-top: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    .admin-product-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      border-right: 4px solid var(--primary);
+    }
+    
+    .admin-product-item.unavailable {
+      border-right-color: var(--danger);
+      background: #fff5f5;
+      opacity: 0.8;
+    }
+    
+    .admin-product-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .admin-product-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--dark);
+    }
+    
+    .admin-product-status {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    
+    .admin-product-status.available {
+      background: var(--success);
+      color: white;
+    }
+    
+    .admin-product-status.unavailable {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .admin-product-details {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+      font-size: 14px;
+      color: var(--gray);
+    }
+    
+    .admin-product-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    
+    .admin-product-actions button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .btn-edit {
+      background: var(--warning);
+      color: white;
+    }
+    
+    .btn-toggle {
+      background: var(--secondary);
+      color: white;
+    }
+    
+    .btn-delete {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .back-btn {
+      background: var(--gray);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .password-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    
+    .password-box {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 350px;
+      text-align: center;
+    }
+    
+    .password-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 15px 0;
+      border-radius: 10px;
+      border: 2px solid #eee;
+    }
+    
+    .edit-form {
+      display: none;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px dashed #ddd;
+    }
+    
+    .edit-form.active {
+      display: block;
+    }
+    
+    .edit-form input, .edit-form select {
+      margin: 5px 0;
+    }
+    
+    .image-upload-area {
+      margin: 10px 0;
+      text-align: center;
+    }
+    
+    .image-preview {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin: 5px auto;
+      border: 2px solid var(--primary);
+    }
+    
+    .upload-btn {
+      background: var(--secondary);
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    
+    .image-input-hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="adminContent" style="display:none;">
+  <div class="admin-container">
+    <button class="back-btn" onclick="goBackToSite()">
+      <i class="fas fa-arrow-right"></i>
+      العودة للموقع
+    </button>
+    
+    <!-- إضافة منتج جديد -->
+    <div class="admin-card">
+      <h2><i class="fas fa-plus-circle"></i> إضافة منتج جديد</h2>
+      <input type="text" id="productName" placeholder="اسم المنتج">
+      <input type="number" id="productPrice" placeholder="سعر الكيلو (₺)" step="0.1">
+      <input type="number" id="productBoxPrice" placeholder="سعر العبوة (₺) - اختياري" step="0.1">
+      <select id="productCategory">
+        <option value="منظفات">منظفات</option>
+        <option value="معطرات">معطرات</option>
+        <option value="شامبو">شامبو</option>
+      </select>
+      
+      <div class="image-upload-area">
+        <img id="imagePreview" class="image-preview" style="display:none;">
+        <input type="file" id="productImageFile" accept="image/*" class="image-input-hidden">
+        <button type="button" class="upload-btn" onclick="document.getElementById('productImageFile').click()">
+          <i class="fas fa-upload"></i> اختر صورة
+        </button>
+        <input type="text" id="productImage" placeholder="أو أدخل رابط الصورة" style="margin-top:8px;">
+      </div>
+      
+      <button onclick="addNewProduct()" class="admin-btn-save">
+        <i class="fas fa-save"></i> إضافة المنتج
+      </button>
+    </div>
+    
+    <!-- قائمة المنتجات -->
+    <div class="admin-card">
+      <h2><i class="fas fa-list"></i> قائمة المنتجات <span id="productsCount" style="font-size:14px;"></span></h2>
+      <div id="adminProductsList" class="products-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="passwordScreen" class="password-screen">
+  <div class="password-box">
+    <i class="fas fa-lock" style="font-size: 50px; color: var(--primary);"></i>
+    <h3>لوحة المدير</h3>
+    <p>أدخل كلمة المرور</p>
+    <input type="password" id="adminPassword" placeholder="كلمة المرور">
+    <button onclick="checkAdminPassword()" class="admin-btn-save">دخول</button>
+  </div>
+</div>
+
+<script>
+  const ADMIN_PASSWORD = "996225386048";
+  
+  function checkAdminPassword() {
+    const password = document.getElementById("adminPassword").value;
+    if (password === ADMIN_PASSWORD) {
+      document.getElementById("passwordScreen").style.display = "none";
+      document.getElementById("adminContent").style.display = "block";
+      loadAdminProducts();
+    } else {
+      alert("❌ كلمة المرور غير صحيحة");
+    }
+  }
+  
+  function goBackToSite() {
+    window.location.href = "index.html";
+  }
+  
+  function getDefaultProducts() {
+    return [
+      { name: "صابون سائل", price: 35, boxPrice: null, img: "img/صابون سائل.png", category: "منظفات", available: true },
+      { name: "سائل جلي", price: 12, boxPrice: null, img: "img/سائل جلي.png", category: "منظفات", available: true },
+      { name: "معطر جو", price: 25, boxPrice: null, img: "img/معطر.png", category: "معطرات", available: false },
+      { name: "دواء غسيل اوتوماتيك", price: 48, boxPrice: null, img: "img/توماتيك.png", category: "منظفات", available: true },
+      { name: "دواء غسيل عادي", price: 45, boxPrice: null, img: "img/عادي.png", category: "منظفات", available: true },
+      { name: "كلور", price: 12, boxPrice: null, img: "img/كلور.png", category: "منظفات", available: true },
+      { name: "شامبو بالعسل", price: 110, boxPrice: null, img: "img/شامبو عسل.png", category: "شامبو", available: false },
+      { name: "عملاق", price: 55, boxPrice: null, img: "img/عملاق.png", category: "منظفات", available: true },
+      { name: "فلاش", price: 25, boxPrice: null, img: "img/فلاش.png", category: "منظفات", available: true },
+      { name: "دواء غسيل سائل", price: 40, boxPrice: 35, img: "img/غسيل سائل.png", category: "منظفات", available: true }
+    ];
+  }
+  
+  function imageToBase64(file, callback) {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function() {
+      callback(reader.result);
+    };
+    reader.onerror = function() {
+      callback(null);
+    };
+  }
+  
+  // رفع صورة الإضافة
+  document.getElementById('productImageFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      imageToBase64(file, function(base64) {
+        if (base64) {
+          document.getElementById('productImage').value = base64;
+          const preview = document.getElementById('imagePreview');
+          preview.src = base64;
+          preview.style.display = 'block';
+        }
+      });
+    }
+  });
+  
+  function loadAdminProducts() {
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    const container = document.getElementById("adminProductsList");
+    const countSpan = document.getElementById("productsCount");
+    
+    if (countSpan) {
+      countSpan.innerHTML = `(${products.length} منتج)`;
+    }
+    
+    container.innerHTML = "";
+    
+    products.forEach((product, index) => {
+      const availableClass = product.available !== false ? 'available' : 'unavailable';
+      const availableText = product.available !== false ? 'متوفر' : 'غير متوفر';
+      const itemClass = product.available === false ? 'unavailable' : '';
+      
+      container.innerHTML += `
+        <div class="admin-product-item ${itemClass}" data-index="${index}">
+          <div class="admin-product-header">
+            <span class="admin-product-name">${product.name}</span>
+            <span class="admin-product-status ${availableClass}">${availableText}</span>
+          </div>
+          <div class="admin-product-details">
+            <span>💰 ${product.price} ₺ / كيلو</span>
+            ${product.boxPrice ? `<span>📦 ${product.boxPrice} ₺ / عبوة</span>` : '<span>📦 لا يوجد سعر عبوة</span>'}
+            <span>📁 ${product.category}</span>
+            ${product.img ? `<span>🖼️ <a href="${product.img}" target="_blank" style="color:var(--primary);">عرض الصورة</a></span>` : ''}
+          </div>
+          <div class="admin-product-actions">
+            <button class="btn-edit" onclick="showEditForm(${index})">
+              <i class="fas fa-edit"></i> تعديل
+            </button>
+            <button class="btn-toggle" onclick="toggleAvailability(${index})">
+              <i class="fas ${product.available !== false ? 'fa-eye-slash' : 'fa-eye'}"></i>
+              ${product.available !== false ? 'جعل غير متوفر' : 'جعل متوفر'}
+            </button>
+            <button class="btn-delete" onclick="deleteProduct(${index})">
+              <i class="fas fa-trash"></i> حذف
+            </button>
+          </div>
+          <div id="editForm${index}" class="edit-form">
+            <h4 style="margin:10px 0;">✏️ تعديل المنتج</h4>
+            <input type="text" id="editName${index}" value="${product.name.replace(/"/g, '&quot;')}" placeholder="اسم المنتج">
+            <input type="number" id="editPrice${index}" value="${product.price}" placeholder="سعر الكيلو" step="0.1">
+            <input type="number" id="editBoxPrice${index}" value="${product.boxPrice || ''}" placeholder="سعر العبوة (اختياري)" step="0.1">
+            <select id="editCategory${index}">
+              <option value="منظفات" ${product.category === 'منظفات' ? 'selected' : ''}>منظفات</option>
+              <option value="معطرات" ${product.category === 'معطرات' ? 'selected' : ''}>معطرات</option>
+              <option value="شامبو" ${product.category === 'شامبو' ? 'selected' : ''}>شامبو</option>
+            </select>
+            <div class="image-upload-area">
+              <img id="editImagePreview${index}" class="image-preview" src="${product.img || ''}" style="${product.img ? 'display:block;' : 'display:none;'}">
+              <input type="file" id="editImageFile${index}" accept="image/*" class="image-input-hidden">
+              <button type="button" class="upload-btn" onclick="document.getElementById('editImageFile${index}').click()">
+                <i class="fas fa-upload"></i> تغيير الصورة
+              </button>
+              <input type="text" id="editImage${index}" value="${product.img || ''}" placeholder="رابط الصورة">
+            </div>
+            <button onclick="updateProduct(${index})" class="admin-btn-update">
+              <i class="fas fa-save"></i> حفظ التعديلات
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // إضافة حدث رفع الصورة للتعديل
+      setupEditImageUpload(index);
+    });
+  }
+  
+  function setupEditImageUpload(index) {
+    const fileInput = document.getElementById(`editImageFile${index}`);
+    if (fileInput) {
+      // إزالة المستمع القديم إذا وجد
+      const newFileInput = fileInput.cloneNode(true);
+      fileInput.parentNode.replaceChild(newFileInput, fileInput);
+      
+      newFileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          imageToBase64(file, function(base64) {
+            if (base64) {
+              document.getElementById(`editImage${index}`).value = base64;
+              const preview = document.getElementById(`editImagePreview${index}`);
+              preview.src = base64;
+              preview.style.display = 'block';
+            }
+          });
+        }
+      });
+    }
+  }
+  
+  function showEditForm(index) {
+    const form = document.getElementById(`editForm${index}`);
+    const allForms = document.querySelectorAll('.edit-form');
+    allForms.forEach(f => {
+      if (f.id !== `editForm${index}`) {
+        f.classList.remove('active');
+      }
+    });
+    form.classList.toggle('active');
+  }
+  
+  function toggleAvailability(index) {
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    products[index].available = products[index].available === false ? true : false;
+    localStorage.setItem("products", JSON.stringify(products));
+    loadAdminProducts();
+    showToast(products[index].available ? "✅ تم تفعيل المنتج" : "⛔ تم تعطيل المنتج");
+  }
+  
+  function updateProduct(index) {
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    
+    const newName = document.getElementById(`editName${index}`).value.trim();
+    const newPrice = parseFloat(document.getElementById(`editPrice${index}`).value);
+    const newBoxPrice = parseFloat(document.getElementById(`editBoxPrice${index}`).value) || null;
+    const newCategory = document.getElementById(`editCategory${index}`).value;
+    let newImage = document.getElementById(`editImage${index}`).value.trim();
+    
+    if (!newName || !newPrice || newPrice <= 0) {
+      alert("❌ يرجى إدخال اسم المنتج وسعر صحيح");
+      return;
+    }
+    
+    if (!newImage) {
+      newImage = "https://via.placeholder.com/300x200?text=" + encodeURIComponent(newName);
+    }
+    
+    products[index] = {
+      ...products[index],
+      name: newName,
+      price: newPrice,
+      boxPrice: newBoxPrice,
+      category: newCategory,
+      img: newImage
+    };
+    
+    localStorage.setItem("products", JSON.stringify(products));
+    loadAdminProducts();
+    showToast("✅ تم تعديل المنتج بنجاح");
+  }
+  
+  function deleteProduct(index) {
+    if (!confirm("⚠️ هل أنت متأكد من حذف هذا المنتج؟")) return;
+    
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    products.splice(index, 1);
+    localStorage.setItem("products", JSON.stringify(products));
+    loadAdminProducts();
+    showToast("🗑️ تم حذف المنتج");
+  }
+  
+  function addNewProduct() {
+    const name = document.getElementById("productName").value.trim();
+    const price = parseFloat(document.getElementById("productPrice").value);
+    const boxPrice = parseFloat(document.getElementById("productBoxPrice").value) || null;
+    const category = document.getElementById("productCategory").value;
+    let img = document.getElementById("productImage").value.trim();
+    
+    if (!name || !price || price <= 0) {
+      alert("❌ يرجى إدخال اسم المنتج وسعر صحيح");
+      return;
+    }
+    
+    if (!img) {
+      img = "https://via.placeholder.com/300x200?text=" + encodeURIComponent(name);
+    }
+    
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    
+    products.push({
+      name: name,
+      price: price,
+      boxPrice: boxPrice,
+      img: img,
+      category: category,
+      available: true
+    });
+    
+    localStorage.setItem("products", JSON.stringify(products));
+    
+    document.getElementById("productName").value = "";
+    document.getElementById("productPrice").value = "";
+    document.getElementById("productBoxPrice").value = "";
+    document.getElementById("productImage").value = "";
+    document.getElementById("imagePreview").style.display = "none";
+    document.getElementById("productImageFile").value = "";
+    
+    loadAdminProducts();
+    showToast("✅ تم إضافة المنتج بنجاح");
+  }
+  
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2b3a4a;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      z-index: 10001;
+      font-size: 14px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.3s ease;
+    `;
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, 2000);
+  }
+  
+  // تهيئة المنتجات
+  if (!localStorage.getItem("products")) {
+    localStorage.setItem("products", JSON.stringify(getDefaultProducts()));
+  }
+</script>
+</body>
+</html>

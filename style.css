@@ -1292,3 +1292,24 @@ body.dark-mode .close-modal {
     font-size: 14px;
   }
 }
+/* زر المدير */
+.admin-btn {
+  background: linear-gradient(135deg, #f72585, #b5179e);
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: 0.3s;
+}
+
+.admin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+}

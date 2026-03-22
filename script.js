@@ -12,21 +12,56 @@ let ordersHistory = [];
 // عداد الطلبات
 let ordersCount = parseInt(localStorage.getItem("ordersCount")) || 0;
 
-// =============== التهيئة ===============
+// كلمة مرور المدير
+const ADMIN_PASSWORD = "admin123";
 
+// =============== الحصول على المنتجات ===============
+function getProducts() {
+  return JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+}
+
+function getDefaultProducts() {
+  return [
+    { name: "صابون سائل", price: 35, boxPrice: null, img: "img/صابون سائل.png", category: "منظفات", available: true },
+    { name: "سائل جلي", price: 12, boxPrice: null, img: "img/سائل جلي.png", category: "منظفات", available: true },
+    { name: "معطر جو", price: 25, boxPrice: null, img: "img/معطر.png", category: "معطرات", available: false },
+    { name: "دواء غسيل اوتوماتيك", price: 48, boxPrice: null, img: "img/توماتيك.png", category: "منظفات", available: true },
+    { name: "دواء غسيل عادي", price: 45, boxPrice: null, img: "img/عادي.png", category: "منظفات", available: true },
+    { name: "كلور", price: 12, boxPrice: null, img: "img/كلور.png", category: "منظفات", available: true },
+    { name: "شامبو بالعسل", price: 110, boxPrice: null, img: "img/شامبو عسل.png", category: "شامبو", available: false },
+    { name: "عملاق", price: 55, boxPrice: null, img: "img/عملاق.png", category: "منظفات", available: true },
+    { name: "فلاش", price: 25, boxPrice: null, img: "img/فلاش.png", category: "منظفات", available: true },
+    { name: "دواء غسيل سائل", price: 40, boxPrice: 35, img: "img/غسيل سائل.png", category: "منظفات", available: true }
+  ];
+}
+
+// =============== التحقق من المدير ===============
+function openAdminPanel() {
+  const password = prompt("🔐 أدخل كلمة مرور المدير:");
+  if (password === ADMIN_PASSWORD) {
+    window.location.href = "admin.html";
+  } else if (password !== null) {
+    showNotification("❌ كلمة المرور غير صحيحة", "error");
+  }
+}
+
+// =============== التهيئة ===============
 document.addEventListener('DOMContentLoaded', function() {
+  // تهيئة المنتجات إذا لم تكن موجودة
+  if (!localStorage.getItem("products")) {
+    localStorage.setItem("products", JSON.stringify(getDefaultProducts()));
+  }
+  
   if (currentUser && usersData[currentUser]) {
     showMainSite();
   } else {
     showLoginScreen();
   }
   
-  // تحديث عداد الطلبات
   updateOrdersCounter();
 });
 
 // =============== عداد الطلبات ===============
-
 function updateOrdersCounter() {
   const counterElement = document.getElementById('ordersCount');
   if (counterElement) {
@@ -41,7 +76,6 @@ function incrementOrdersCounter() {
 }
 
 // =============== نظام تسجيل الدخول ===============
-
 function showLoginScreen() {
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("mainSite").style.display = "none";
@@ -57,13 +91,14 @@ function showMainSite() {
     document.getElementById("userAddress").innerText = `${profile.district}`;
   }
   
-  // تحميل البيانات
+  // إظهار زر المدير (اختياري)
+   document.getElementById("adminBtn").style.display = "flex";
+  
   loadUserData();
   displayProducts();
   renderCart();
   renderOrders();
   
-  // رسالة ترحيب
   setTimeout(() => {
     showNotification('👋 أهلاً بك في معمل النهضة', 'info', 3000);
   }, 1000);
@@ -98,24 +133,29 @@ function saveClientData() {
   let district = document.getElementById("district").value;
   let street = document.getElementById("street").value.trim();
   let home = document.getElementById("home").value.trim();
+  let building = document.getElementById("building").value;
+
+  // إذا تم اختيار بناية، نستخدمها بدلاً من الحارة
+  if (building && building !== "") {
+    street = `بناية ${building}`;
+  }
 
   if (!district || !street || !home) {
     showNotification("❌ يرجى إدخال جميع البيانات", "error");
     return;
   }
 
-  // إنشاء معرف فريد للمستخدم
   let userId = `${district}_${street}_${home}`;
   
   if (!usersData[userId]) {
     usersData[userId] = {
-      profile: { district, street, home },
+      profile: { district, street, home, building: building || null },
       orders: [],
       cart: [],
       joinDate: new Date().toLocaleDateString("ar-EG")
     };
   } else {
-    usersData[userId].profile = { district, street, home };
+    usersData[userId].profile = { district, street, home, building: building || null };
   }
   
   currentUser = userId;
@@ -142,9 +182,9 @@ function showFullAddress() {
 }
 
 // =============== نظام الإشعارات ===============
-
 function showNotification(message, type = 'info', duration = 5000) {
   const area = document.getElementById('notificationArea');
+  if (!area) return;
   
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
@@ -172,45 +212,35 @@ function showNotification(message, type = 'info', duration = 5000) {
   area.appendChild(notification);
   
   setTimeout(() => {
-    notification.remove();
+    if (notification.parentElement) notification.remove();
   }, duration);
 }
 
-// =============== المنتجات ===============
-
-const products = [
-  { name: "صابون سائل", price: 35, img: "img/صابون سائل.png", category: "منظفات", available: true },
-  { name: "سائل جلي", price: 12, img: "img/سائل جلي.png", category: "منظفات", available: true },
-  { name: "معطر جو", price: 25, img: "img/معطر.png", category: "معطرات", available: false },
-  { name: "دواء غسيل اوتوماتيك", price: 48, img: "img/توماتيك.png", category: "منظفات", available: true },
-  { name: "دواء غسيل عادي", price: 45, img: "img/عادي.png", category: "منظفات", available: true },
-  { name: "كلور", price: 12, img: "img/كلور.png", category: "منظفات", available: true },
-  { name: "شامبو بالعسل", price: 110, img: "img/شامبو عسل.png", category: "شامبو", available: false },
-  { name: "عملاق", price: 55, img: "img/عملاق.png", category: "منظفات", available: true },
-  { name: "فلاش", price: 25, img: "img/فلاش.png", category: "منظفات", available: true }
-];
-
+// =============== عرض المنتجات ===============
 function displayProducts() {
   const container = document.getElementById("products");
   if (!container) return;
   
+  const products = getProducts();
   container.innerHTML = "";
   
   products.forEach((p, i) => {
     const isAvailable = p.available !== false;
+    const hasBoxPrice = p.boxPrice !== null && p.boxPrice > 0;
     
     container.innerHTML += `
       <div class="card" data-category="${p.category}">
-        <img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x200?text=${encodeURIComponent(p.name)}'">
+        <img src="${p.img}" alt="${p.name}" loading="lazy" onclick="openImageModalByIndex(${i})" style="cursor:pointer;" onerror="this.src='https://via.placeholder.com/300x200?text=${encodeURIComponent(p.name)}'">
         <div class="card-body">
           <h3>${p.name}</h3>
-          <div class="price">💰 ${p.price} ${currency}</div>
+          <div class="price">💰 ${p.price} ${currency} / كيلو${hasBoxPrice ? `<br>📦 ${p.boxPrice} ${currency} / عبوة` : ''}</div>
           ${isAvailable ? `
-            <select id="type${i}" class="product-select">
+            <select id="type${i}" class="product-select" onchange="toggleQuantityInput(${i}, this.value)">
               <option value="kg">⚖️ كيلو</option>
               <option value="money">💵 مبلغ</option>
+              ${hasBoxPrice ? '<option value="box">📦 عبوة</option>' : ''}
             </select>
-            <input type="number" id="qty${i}" placeholder="الكمية" min="0.1" step="0.1" inputmode="decimal">
+            <input type="number" id="qty${i}" placeholder="${hasBoxPrice ? 'الكمية (كيلو/مبلغ/عبوة)' : 'الكمية'}" min="0.1" step="0.1" inputmode="decimal">
             <button onclick="addToCart(${i})">
               <i class="fas fa-cart-plus"></i>
               إضافة
@@ -226,30 +256,29 @@ function displayProducts() {
   });
 }
 
-function filterProducts() {
-  let searchText = document.getElementById('searchInput').value.toLowerCase();
-  let cards = document.querySelectorAll('.card');
-  let visibleCount = 0;
+function toggleQuantityInput(index, type) {
+  const qtyInput = document.getElementById(`qty${index}`);
+  const products = getProducts();
+  const product = products[index];
   
-  cards.forEach(card => {
-    let productName = card.querySelector('h3').innerText.toLowerCase();
-    if (productName.includes(searchText)) {
-      card.style.display = 'flex';
-      visibleCount++;
-    } else {
-      card.style.display = 'none';
-    }
-  });
-  
-  if (visibleCount === 0 && searchText !== '') {
-    showNotification("🔍 لا توجد منتجات مطابقة", "info");
+  if (type === "box" && product.boxPrice) {
+    qtyInput.placeholder = "عدد العبوات";
+    qtyInput.step = "1";
+    qtyInput.min = "1";
+  } else if (type === "kg") {
+    qtyInput.placeholder = "الكمية (كيلو)";
+    qtyInput.step = "0.1";
+    qtyInput.min = "0.1";
+  } else if (type === "money") {
+    qtyInput.placeholder = "المبلغ (₺)";
+    qtyInput.step = "0.1";
+    qtyInput.min = "0.1";
   }
 }
 
-// =============== إدارة السلة ===============
-
 function addToCart(i) {
-  // التحقق من توفر المنتج
+  const products = getProducts();
+  
   if (products[i].available === false) {
     showNotification("❌ هذا المنتج غير متوفر حالياً", "error");
     return;
@@ -264,21 +293,37 @@ function addToCart(i) {
   }
 
   let product = products[i];
-  let kg = type === "kg" ? qty : (qty / product.price);
-  let total = kg * product.price;
+  let kg = 0;
+  let total = 0;
+  let unit = "كغ";
+  
+  if (type === "kg") {
+    kg = qty;
+    total = kg * product.price;
+    unit = "كغ";
+  } else if (type === "money") {
+    kg = qty / product.price;
+    total = qty;
+    unit = "₺";
+  } else if (type === "box" && product.boxPrice) {
+    kg = qty;
+    total = qty * product.boxPrice;
+    unit = "علبة";
+  }
 
   cart.push({ 
     name: product.name, 
     kg: kg.toFixed(2), 
     total: total.toFixed(2),
-    price: product.price
+    price: type === "box" ? product.boxPrice : product.price,
+    unit: unit,
+    type: type
   });
   
   saveUserData();
   renderCart();
   showNotification(`✅ تمت إضافة ${product.name}`, "success");
   
-  // تأثير بسيط
   let floatingCart = document.querySelector('.floating-cart');
   if (floatingCart) {
     floatingCart.style.transform = 'scale(1.2)';
@@ -288,6 +333,7 @@ function addToCart(i) {
   }
 }
 
+// =============== إدارة السلة ===============
 function renderCart() {
   let items = document.getElementById("cartItems");
   if (!items) return;
@@ -312,7 +358,7 @@ function renderCart() {
         <div class="cart-item">
           <div>
             <b>${item.name}</b><br>
-            <small>${item.kg} كغ</small>
+            <small>${item.kg} ${item.unit === "علبة" ? "علبة" : "كغ"}</small>
           </div>
           <div>
             <strong>${item.total} ${currency}</strong>
@@ -364,7 +410,6 @@ function toggleCart() {
 }
 
 // =============== إدارة الطلبات ===============
-
 function toggleOrders() {
   let ordersElement = document.getElementById("orders");
   let cartElement = document.getElementById("cart");
@@ -435,9 +480,6 @@ function clearAllOrders() {
 }
 
 // =============== واتساب للطلبات ===============
-
-// =============== واتساب للطلبات ===============
-
 function sendWhatsApp() {
   if (cart.length === 0) {
     showNotification("❌ السلة فارغة", "error");
@@ -459,7 +501,7 @@ function sendWhatsApp() {
   let order = {
     address: address,
     date: date,
-    items: cart.map(i => `• ${i.name} - ${i.kg} كغ - ${i.total} ${currency}`),
+    items: cart.map(i => `• ${i.name} - ${i.kg} ${i.unit === "علبة" ? "علبة" : "كغ"} - ${i.total} ${currency}`),
     total: total
   };
 
@@ -485,15 +527,15 @@ function sendWhatsApp() {
   // فتح واتساب
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=` + encodeURIComponent(msg), '_blank');
 
-  // ===== مسح السلة بعد إرسال الطلب =====
-  cart = [];  // تفريغ مصفوفة السلة
-  saveUserData();  // حفظ التغيير في localStorage
-  renderCart();  // إعادة عرض السلة (ستظهر فارغة)
+  // مسح السلة بعد إرسال الطلب
+  cart = [];
+  saveUserData();
+  renderCart();
   
   showNotification("📤 تم إرسال الطلب", "success");
 }
-// =============== واتساب للملاحظات ===============
 
+// =============== واتساب للملاحظات ===============
 function sendNoteToWhatsApp() {
   let note = document.getElementById("userNote").value.trim();
   let noteType = document.getElementById("noteType").value;
@@ -531,71 +573,44 @@ function sendNoteToWhatsApp() {
   showNotification("📤 تم إرسال ملاحظاتك", "success");
 }
 
-// =============== الرسالة المنبثقة ===============
-
-function showToast(message, type = "info") {
-  let toast = document.getElementById("toast");
-  if (!toast) return;
-  
-  toast.innerText = message;
-  toast.style.opacity = "1";
-  toast.style.bottom = "100px";
-  
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.bottom = "80px";
-  }, 2000);
-}
-
 // =============== نظام معاينة الصور ===============
-
 let currentImageIndex = 0;
 let productImages = [];
 
-// تجميع جميع صور المنتجات
 function collectProductImages() {
   productImages = [];
-  const cards = document.querySelectorAll('.card img');
-  cards.forEach((img, index) => {
+  const products = getProducts();
+  products.forEach((product, index) => {
     productImages.push({
-      src: img.src,
-      alt: img.alt || 'صورة المنتج'
+      src: product.img,
+      alt: product.name,
+      index: index
     });
-    
-    // إضافة حدث النقر للصورة
-    img.style.cursor = 'pointer';
-    img.onclick = function() {
-      openImageModal(index);
-    };
   });
 }
 
-// فتح نافذة معاينة الصورة
-function openImageModal(index) {
+function openImageModalByIndex(index) {
+  collectProductImages();
   currentImageIndex = index;
   const modal = document.getElementById('imageModal');
   const modalImg = document.getElementById('modalImage');
   const caption = document.getElementById('modalCaption');
   
-  modalImg.src = productImages[index].src;
-  caption.innerHTML = productImages[index].alt;
+  if (productImages[index]) {
+    modalImg.src = productImages[index].src;
+    caption.innerHTML = productImages[index].alt;
+  }
   
   modal.classList.add('active');
-  
-  // منع التمرير في الخلفية
   document.body.style.overflow = 'hidden';
 }
 
-// إغلاق نافذة المعاينة
 function closeImageModal() {
   const modal = document.getElementById('imageModal');
   modal.classList.remove('active');
-  
-  // إعادة التمرير
   document.body.style.overflow = 'auto';
 }
 
-// التنقل بين الصور
 function navigateImage(direction) {
   currentImageIndex += direction;
   
@@ -608,11 +623,12 @@ function navigateImage(direction) {
   const modalImg = document.getElementById('modalImage');
   const caption = document.getElementById('modalCaption');
   
-  modalImg.src = productImages[currentImageIndex].src;
-  caption.innerHTML = productImages[currentImageIndex].alt;
+  if (productImages[currentImageIndex]) {
+    modalImg.src = productImages[currentImageIndex].src;
+    caption.innerHTML = productImages[currentImageIndex].alt;
+  }
 }
 
-// تحميل الصورة
 function downloadCurrentImage() {
   const modalImg = document.getElementById('modalImage');
   const link = document.createElement('a');
@@ -621,15 +637,13 @@ function downloadCurrentImage() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
   showNotification('✅ جاري تحميل الصورة', 'success');
 }
 
-// إضافة أزرار التنقل في النافذة المنبثقة
+// إضافة أزرار التنقل
 function addNavigationButtons() {
   const modal = document.getElementById('imageModal');
   
-  // زر التنقل لليسار
   const prevBtn = document.createElement('button');
   prevBtn.className = 'nav-btn prev-btn';
   prevBtn.innerHTML = '❮';
@@ -638,7 +652,6 @@ function addNavigationButtons() {
     navigateImage(-1);
   };
   
-  // زر التنقل لليمين
   const nextBtn = document.createElement('button');
   nextBtn.className = 'nav-btn next-btn';
   nextBtn.innerHTML = '❯';
@@ -647,7 +660,6 @@ function addNavigationButtons() {
     navigateImage(1);
   };
   
-  // زر التحميل
   const downloadBtn = document.createElement('button');
   downloadBtn.className = 'download-image';
   downloadBtn.innerHTML = '<i class="fas fa-download"></i> تحميل الصورة';
@@ -661,100 +673,130 @@ function addNavigationButtons() {
   modal.appendChild(downloadBtn);
 }
 
-// إضافة تنسيقات أزرار التنقل (أضفها في CSS)
-function addNavButtonStyles() {
-  const style = document.createElement('style');
-  style.textContent = `
-    .nav-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255,255,255,0.2);
-      color: white;
-      border: none;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      font-size: 30px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: 0.3s;
-      z-index: 10001;
-    }
-    
-    .nav-btn:hover {
-      background: rgba(255,255,255,0.3);
-      transform: translateY(-50%) scale(1.1);
-    }
-    
-    .prev-btn {
-      left: 20px;
-    }
-    
-    .next-btn {
-      right: 20px;
-    }
-    
-    body.dark-mode .nav-btn {
-      background: rgba(0,0,0,0.5);
-    }
-    
-    @media (max-width: 767px) {
-      .nav-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 24px;
-      }
-      
-      .prev-btn {
-        left: 5px;
-      }
-      
-      .next-btn {
-        right: 5px;
-      }
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-// تهيئة نظام معاينة الصور
-function initImagePreview() {
-  // جمع الصور بعد تحميل المنتجات
-  setTimeout(() => {
-    collectProductImages();
-  }, 500);
+// إضافة دعم لوحة المفاتيح
+document.addEventListener('keydown', function(e) {
+  const modal = document.getElementById('imageModal');
+  if (!modal.classList.contains('active')) return;
   
-  // إضافة أزرار التنقل
-  addNavigationButtons();
-  
-  // إضافة تنسيقات الأزرار
-  addNavButtonStyles();
-  
-  // إضافة دعم لوحة المفاتيح
-  document.addEventListener('keydown', function(e) {
-    const modal = document.getElementById('imageModal');
-    if (!modal.classList.contains('active')) return;
-    
-    if (e.key === 'Escape') {
-      closeImageModal();
-    } else if (e.key === 'ArrowLeft') {
-      navigateImage(-1);
-    } else if (e.key === 'ArrowRight') {
-      navigateImage(1);
-    }
-  });
-}
-
-// تشغيل التهيئة عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', function() {
-  // تأخير قليل للتأكد من تحميل المنتجات
-  setTimeout(initImagePreview, 1000);
+  if (e.key === 'Escape') {
+    closeImageModal();
+  } else if (e.key === 'ArrowLeft') {
+    navigateImage(-1);
+  } else if (e.key === 'ArrowRight') {
+    navigateImage(1);
+  }
 });
 
-// إضافة دالة لتحديث الصور عند إضافة منتجات جديدة
-function refreshImages() {
+// تهيئة معاينة الصور
+setTimeout(() => {
+  collectProductImages();
+  addNavigationButtons();
+}, 1000);
+
+function toggleBuildingInput() {
+  const district = document.getElementById("district").value;
+  const buildingSelect = document.getElementById("building");
+  const streetInput = document.getElementById("street");
+  const homeInput = document.getElementById("home");
+  
+  // فقط حي النهضة يظهر له خانة البناية
+  if (district === "النهضة") {
+    buildingSelect.style.display = "block";
+    
+    // إضافة مستمع لحدث تغيير البناية
+    buildingSelect.onchange = function() {
+      if (buildingSelect.value !== "") {
+        // عند اختيار بناية، يتم إخفاء حقل الحارة
+        streetInput.style.display = "none";
+        streetInput.value = ""; // تفريغ القيمة
+        homeInput.placeholder = "رقم البيت (داخل البناية)";
+      } else {
+        // عند إلغاء اختيار البناية، يظهر حقل الحارة
+        streetInput.style.display = "block";
+        streetInput.placeholder = "رقم الحارة";
+        homeInput.placeholder = "رقم البيت";
+      }
+    };
+    
+  } else {
+    buildingSelect.style.display = "none";
+    buildingSelect.value = ""; // تفريغ القيمة
+    streetInput.style.display = "block";
+    streetInput.placeholder = "رقم الحارة";
+    homeInput.placeholder = "رقم البيت";
+  }
+}
+// دالة لإظهار الرسالة المنبثقة
+function showToast(message, type = "info") {
+  let toast = document.getElementById("toast");
+  if (!toast) return;
+  
+  toast.innerText = message;
+  toast.style.opacity = "1";
+  toast.style.bottom = "100px";
+  
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.bottom = "80px";
+  }, 2000);
+}
+// تهيئة الحقول عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  const buildingSelect = document.getElementById("building");
+  const streetInput = document.getElementById("street");
+  const homeInput = document.getElementById("home");
+  const districtSelect = document.getElementById("district");
+  
+  // إضافة حدث لمراقبة تغيير البناية
+  if (buildingSelect) {
+    buildingSelect.addEventListener('change', function() {
+      if (this.value !== "") {
+        streetInput.style.display = "none";
+        streetInput.value = "";
+        homeInput.placeholder = "رقم البيت (داخل البناية)";
+      } else {
+        streetInput.style.display = "block";
+        streetInput.placeholder = "رقم الحارة";
+        homeInput.placeholder = "رقم البيت";
+      }
+    });
+  }
+  
+  // إضافة حدث لمراقبة تغيير الحي
+  if (districtSelect) {
+    districtSelect.addEventListener('change', function() {
+      if (this.value === "النهضة") {
+        buildingSelect.style.display = "block";
+      } else {
+        buildingSelect.style.display = "none";
+        buildingSelect.value = "";
+        streetInput.style.display = "block";
+        streetInput.placeholder = "رقم الحارة";
+        homeInput.placeholder = "رقم البيت";
+      }
+    });
+  }
+});
+// =============== دوال التعديل في script.js ===============
+
+// تحديث عرض المنتجات بعد التعديل من المدير
+function refreshProductsDisplay() {
+  displayProducts();
   collectProductImages();
 }
+
+// دالة لإعادة تحميل المنتجات عند العودة من المدير
+window.addEventListener('storage', function(e) {
+  if (e.key === 'products') {
+    refreshProductsDisplay();
+  }
+});
+// =============== دعم الصور Base64 ===============
+
+// دالة للتحقق إذا كانت الصورة Base64
+function isBase64Image(str) {
+  return str && str.startsWith('data:image');
+}
+
+// دالة لتحديث عرض المنتجات مع دعم Base64
+// (لا تحتاج تعديل لأن displayProducts تدعم الرابط مباشرة)
